@@ -7,7 +7,7 @@
 
 # Site settings
 title: DzX
-brief-intro: Deep Leaning Learner
+brief-intro: Beginner on Deep Learning
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://crystalxian.github.io" # the base hostname & protocol for your site
 
