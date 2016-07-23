@@ -1,0 +1,57 @@
+<ul id="markdown-toc">
+  <li><a href="#section" id="markdown-toc-section">综述</a></li>
+  <li><a href="#section-1" id="markdown-toc-section-1">介绍</a></li>
+</ul>
+
+<p>SSD的学习笔记。</p>
+
+<hr />
+
+<h2 id="section">综述</h2>
+
+<ul>
+  <li>
+    <p>Our approach, named SSD, discretizes the output space of bounding boxes into a set of bounding box priors over different aspect raios and scales per feature map location.</p>
+
+    <p>理解：diescretizes？priors？</p>
+  </li>
+  <li>
+    <p>It completely discards the proposal generation step and encapsulates al the computation in a single network.</p>
+
+    <p>亮点：makes SSD easy to train and straightforward to intergrate into systems that require a detection component.</p>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="section-1">介绍</h2>
+<ul>
+  <li>
+    <p>Region-based Convolutional Neural Networks(R-CNN) or its faster variants approach detection as a classification problem over object proposals, followed by (optional) regression of the bounding box coordinates.</p>
+
+    <p>理解：R-CNN根据selective search选出region proposals，在利用CNN进行分类后，得到一系列的有类别（类别概率）的region proposals。通过nms的方法得到想要的bounding box（？）</p>
+  </li>
+  <li>
+    <p>Given a set of fixed bounding box priors of different aspect ratios and scales, we train a network to select which priors contain objects of interest and adjust their coordinates to better match the object’s shape.</p>
+  </li>
+  <li>
+    <p>In our method, the offset adjustment and condidences for multiple categories of each prior are predicted from the underlying 1x1 feature at each location on a feature map, as opposed to the whole feature map as done in MultiBox and Yolo.</p>
+
+    <p>主要的实现方式如下图所示：
+ 	<img src="/assets/ssd_intro.png" alt="" /></p>
+
+    <p>理解:？</p>
+  </li>
+  <li>
+    <p>The set of bounding box priors we define is in the same spirit as the anchor boxes used in the Faster R-CNN.</p>
+
+    <p>分析：</p>
+  </li>
+  <li>
+    <p>SSD is the first work to combine the idea of convolutional bounding box priors with the ability to predict multiple object categories.</p>
+  </li>
+</ul>
+
+<hr />
+
+<p>本文不定期更新。</p>
