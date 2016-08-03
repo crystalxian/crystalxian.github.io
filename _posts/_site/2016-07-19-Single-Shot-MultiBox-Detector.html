@@ -1,6 +1,8 @@
 <ul id="markdown-toc">
   <li><a href="#section" id="markdown-toc-section">综述</a></li>
   <li><a href="#section-1" id="markdown-toc-section-1">介绍</a></li>
+  <li><a href="#section-2" id="markdown-toc-section-2">相关工作</a></li>
+  <li><a href="#section-3" id="markdown-toc-section-3">实现</a></li>
 </ul>
 
 <p>SSD的学习笔记。</p>
@@ -11,12 +13,12 @@
 
 <ul>
   <li>
-    <p>Our approach, named SSD, discretizes the output space of bounding boxes into a set of bounding box priors over different aspect raios and scales per feature map location.</p>
+    <p>Our approach, named SSD, discretizes the output space of bounding boxes into a set of bounding box priors over different aspect ratios and scales per feature map location.</p>
 
     <p>理解：diescretizes？priors？</p>
   </li>
   <li>
-    <p>It completely discards the proposal generation step and encapsulates al the computation in a single network.</p>
+    <p>It completely discards the proposal generation step and encapsulates all the computation in a single network.</p>
 
     <p>亮点：makes SSD easy to train and straightforward to intergrate into systems that require a detection component.</p>
   </li>
@@ -35,23 +37,55 @@
     <p>Given a set of fixed bounding box priors of different aspect ratios and scales, we train a network to select which priors contain objects of interest and adjust their coordinates to better match the object’s shape.</p>
   </li>
   <li>
-    <p>In our method, the offset adjustment and condidences for multiple categories of each prior are predicted from the underlying 1x1 feature at each location on a feature map, as opposed to the whole feature map as done in MultiBox and Yolo.</p>
+    <p>In our method, the offset adjustment and confidences for multiple categories of each prior are predicted from the underlying 1x1 feature at each location on a feature map, as opposed to the whole feature map as done in MultiBox and Yolo.</p>
 
-    <p>主要的实现方式如下图所示：
- 	<img src="/assets/ssd_intro.png" alt="" /></p>
+    <p>主要的实现方式如下图所示：</p>
+  </li>
+</ul>
 
-    <p>理解:？</p>
+ 	<img src="/assets/ssd_intro.png" alt="" />
+
+<div class="highlighter-rouge"><pre class="highlight"><code>理解:？ * The set of bounding box priors we define is in the same spirit as the anchor boxes used in the Faster R-CNN.
+
+分析：
+</code></pre>
+</div>
+
+<ul>
+  <li>SSD is the first work to combine the idea of convolutional bounding box priors with the ability to predict multiple object categories.</li>
+</ul>
+
+<hr />
+
+<h2 id="section-2">相关工作</h2>
+
+<ul>
+  <li>
+    <p>Faster-RCNN replaces selective search proposals by ones learned from a region proposal network(RPN), and introduces a method to integrate the RPN with Fast R-CNN by alternating between fine-tuning shared convolutional layers and prediction layers for these two networks.
+  借鉴了anchor boxes的观点。</p>
   </li>
   <li>
-    <p>The set of bounding box priors we define is in the same spirit as the anchor boxes used in the Faster R-CNN.</p>
-
-    <p>分析：</p>
-  </li>
-  <li>
-    <p>SSD is the first work to combine the idea of convolutional bounding box priors with the ability to predict multiple object categories.</p>
+    <p>If we only use one prior per location freom the topmost feature map,our SSD has similar architecture as OverFeat; if we use the whole topmost feature map for predictions instead of using the convolutional priors, we can approximately reproduce YOLO.</p>
   </li>
 </ul>
 
 <hr />
+
+<h2 id="section-3">实现</h2>
+<ul>
+  <li>Training</li>
+</ul>
+
+<blockquote>
+  <p>用bi来代表每一个priors.每一个prior都包含bounding box和一系列物体类别的置信度。</p>
+</blockquote>
+
+<blockquote>
+  <p>预测box的坐标是通过把网络计算出的offsets加到相应的priors上，所有priors和ground truth boxes都是相对于全图的归一化坐标。’解释’ 归一化的坐标使得我们不必担心输入图片的大小问题。</p>
+</blockquote>
+
+<ul>
+  <li>匹配问题</li>
+</ul>
 
 <p>本文不定期更新。</p>

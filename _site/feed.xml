@@ -5,9 +5,245 @@
     <description></description>
     <link>http://crystalxian.github.io/</link>
     <atom:link href="http://crystalxian.github.io/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sat, 23 Jul 2016 13:18:29 +0800</pubDate>
-    <lastBuildDate>Sat, 23 Jul 2016 13:18:29 +0800</lastBuildDate>
+    <pubDate>Sat, 30 Jul 2016 22:59:23 +0800</pubDate>
+    <lastBuildDate>Sat, 30 Jul 2016 22:59:23 +0800</lastBuildDate>
     <generator>Jekyll v3.1.6</generator>
+    
+      <item>
+        <title>SSD learning Note</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;摘要&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;介绍&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-2&quot; id=&quot;markdown-toc-section-2&quot;&gt;主体部分&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#framework&quot; id=&quot;markdown-toc-framework&quot;&gt;Framework&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#auxiliary-stucture&quot; id=&quot;markdown-toc-auxiliary-stucture&quot;&gt;auxiliary stucture&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;a href=&quot;#train&quot; id=&quot;markdown-toc-train&quot;&gt;Train&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#rcnn&quot; id=&quot;markdown-toc-rcnn&quot;&gt;RCNN对照笔记&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#overfeat&quot; id=&quot;markdown-toc-overfeat&quot;&gt;OverFeat对照笔记&lt;/a&gt;        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;#vocabulary&quot; id=&quot;markdown-toc-vocabulary&quot;&gt;Vocabulary&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;SSD的学习笔记。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;section&quot;&gt;摘要&lt;/h3&gt;
+&lt;p&gt;Our approach, named SSD, &lt;strong&gt;discretizes&lt;/strong&gt; the output space of bounding boxes into a set of default boxes over different aspect ratios and scales per feature map location.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;把bounding boxes离散化成每个特征图上拥有不同长宽比或不同尺度的原始boxes。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;特点：&lt;/p&gt;
+
+&lt;p&gt;网络对每个原始boxes中是否存在某个类别的物体进行打分的同时，对每个default boxes进行调整，使得其更好地match物体的形状。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;同时进行分类和回归？直接是一个回归的问题。对于yolo和ssd直接利用一个网络判断物体分类和位置，而不再像Rcnn家族训练同时训练一个分类器和一个bounding boxes的回归器。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;可以对不同尺寸的图片直接进行操作。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;【针对CNN全连接的问题？】依旧需要resize图片，使用warp的方法。&lt;code class=&quot;highlighter-rouge&quot;&gt;resize-mode:P.Resize.WARP&lt;/code&gt;（需要resize的原因：虽然没有全连接层，但是为了最后判断的时候输出固定。）&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;不需要生成proposal和随后的降采样过程&lt;code class=&quot;highlighter-rouge&quot;&gt;针对RCNN&lt;/code&gt;，整个步骤整合为一个网络。&lt;code class=&quot;highlighter-rouge&quot;&gt;是提高速度的原因&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;速度：&lt;/p&gt;
+
+&lt;p&gt;For &lt;script type=&quot;math/tex&quot;&gt;300 \times 300&lt;/script&gt; input, SSD achieves 69.8% mAP on VOC2007 test at 24 FPS on a GTX 980.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;section-1&quot;&gt;介绍&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;强调eliminating bounding box proposals and the subsequent pixel or feature resampling stage.&lt;code class=&quot;highlighter-rouge&quot;&gt;not the first one to do this work 相关：YOLO，OverFeat&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;用一个小的卷积模板预测分类和bounding box locations的offsets&lt;code class=&quot;highlighter-rouge&quot;&gt;YOLO用了全连接层&lt;/code&gt;&lt;/li&gt;
+      &lt;li&gt;实现多尺度的检测：在一个feature map上使用一组filters完成不同长宽比的检测，并且将这些filters应用到后来多级网络得到的不同的feature maps上。			 
+这些使得输入一个低分辨率的图片就可以得到高准确率的检测结果。–&amp;gt;加速啊！&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;一句总结core:predicting category scores and box offsets for a fixed set of default bounding boxes using small convolutional filters applied to feature maps.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;再强调一遍：In order to achieve high detection accuracy we produce predictions of different scales from feature maps of different scales, and explicitly separate predictions by aspect ratio.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;section-2&quot;&gt;主体部分&lt;/h3&gt;
+
+&lt;h4 id=&quot;framework&quot;&gt;Framework&lt;/h4&gt;
+
+&lt;p&gt;SSD是基于一个前馈的卷积网络，网络的输入是固定大小的图片，输出是固定大小的张量。张量中包括bounding boxes和在这些boxes中存在某个类别物体的可能性。之后再利用non-maximum suppression做最后的检测。&lt;/p&gt;
+
+&lt;p&gt;卷积网络结构：截取经典的分类网络，并称之为base work。在base work的基础上加上我们自己auxiliary structure。&lt;/p&gt;
+
+&lt;h5 id=&quot;auxiliary-stucture&quot;&gt;auxiliary stucture&lt;/h5&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;获得多尺度的特征图。卷积特征层被加到了被截断的base network后面，来实现多尺度的检测。每一个特征层上用来预测识别的卷积模型都不一样。【对比：YOLO和Overfeat在一个尺度图上做预测识别】&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;识别的卷积预测。每一个特征层上都可以利用一组卷积滤波器产生一组确定数目的识别预测。对于每一个特征图（&lt;script type=&quot;math/tex&quot;&gt;m\times n \times p&lt;/script&gt;），用(&lt;script type=&quot;math/tex&quot;&gt;3 \times 3\times p&lt;/script&gt;)的kernel，得到对某个类别的评分或者相对default box坐标的shape offset.The bounding box offset output values are measured relative to a default box postion relative to each feature map location.
+&lt;img src=&quot;https://s3.amazonaws.com/f.cl.ly/items/2i1O2h0j302W3e0u2D40/ssdframe.png&quot; alt=&quot;图1&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;Default Boxes：&lt;strong&gt;在一些不同尺度（&lt;script type=&quot;math/tex&quot;&gt;8\times8或者4\times4&lt;/script&gt;）的特征图的每个位置上，我们给出（估计）一小组（4个）有着不同长宽比的原始boxes，如下图所示。&lt;/strong&gt;对于每一个原始box，我们预测shape offsets和评估在这个box内中可能有的物体类别。具体来说，对于一个（&lt;script type=&quot;math/tex&quot;&gt;m\times n&lt;/script&gt;）大小的特征图，每一个位置上都有k个相应的default boxes，对于每个default box我们需要对c类物体的评估分和4个offsets，所以对于一个特征图需要(c+4)kmn个输出。这与anchor boxes&lt;code class=&quot;highlighter-rouge&quot;&gt;Faster Rcnn&lt;/code&gt;相似。【不一样的部分是SSD用在多尺度上】&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h5 id=&quot;train&quot;&gt;Train&lt;/h5&gt;
+&lt;ol&gt;
+  &lt;li&gt;Match default boxes和ground truth boxes。如上图所示。方法paper上很简略，看起来应该跟Faster Rcnn一毛一样。（阈值不同）&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;rcnn&quot;&gt;RCNN对照笔记&lt;/h4&gt;
+&lt;p&gt;究极版RCNN–&lt;strong&gt;Faster Rcnn&lt;/strong&gt;
+1. 实现：
+hypothesize bounding boxes-&amp;gt;resample pixels or features for each box-&amp;gt;apply a high-quality classfier
+2. 优缺点：
+* 优点：所有分类和检测大赛上的头名【use deep network–ResNetwork】
+* 缺点：计算量大，不能实时。【具体数据7FPS-the basic Faster Rcnn】
+3. 细节
+&lt;img src=&quot;https://s3.amazonaws.com/f.cl.ly/items/1n3r022J2y162b1W2K3Z/anchor_1.png&quot; alt=&quot;center&quot; /&gt; Faster Rcnn 中anchor的实现
+* anchor【default boxes】The k proposals are parameterized relative to k reference boxes, which we call &lt;em&gt;anchors&lt;/em&gt;. An anchor is centered at the sliding window in question, and is associated with a scale and aspect ratio. 一般有三种尺度，三种长宽比。这里的sliding window 用$n\times n$的卷积层实现，对于每一个被卷积层作用的卷积特征图（$W \times H$）有$W \times H \times k$个anchors。
+		 *  anchor和计算proposal的方法具有平移不变性。如果一个物体在图像中平移，这个特征也相应的平移，并且相同的方法能够在任意位置预测出这个特征。【对比MultiBox的anchor就没有平移不变性】
+				 *  提供一种多尺度预测的新方法。老方法一：基于图像\特征图的金字塔。老方法二：基于多尺度的sliding window\滤波器金字塔。anchor提供的方法是多尺度的anchor，most cost-efficient。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;					          重大意义在于The design of multiscale anchors is a key component for sharing features without extra cost for addressing scales.
+							   ![|center](https://s3.amazonaws.com/f.cl.ly/items/0J3v1s0n1V0K3p3n0b1P/anchor_2.png)
+							   Faster Rcnn的loss function
+							   1. 判断每个anchor中是否有物体。positive label两种情况(1)anchor和ground-truth box有最大的IOU(2)anchor和ground-truth box IOU值大于阈值(0.7) negative label的情况：non-positive anchor跟所有的ground-truth boxes的IOU小于一个阈值(0.3)非正也非负的anchors 不参与training
+							   2. objective function
+							   $$ L({p_i},{t_i})= \frac{1}{N_{cls}}\sum_iL_{cls}(p_i,p_i^*) +\lambda\frac{1}{N_{reg}}\sum_ip_i^*L_{reg}(t_i,t_i^*)$$
+							   $p_i^*=1$anchor为positive的时候。$p_i$我们网络计算出来的anchor i中是物体的概率。
+							   $L_{reg}(t_i,t_i^*)= R(t_i,t_i^*)$  R is the robust loss function.
+							   $p_i^*L_{reg}$只有当anchor是positive的时候($p_i^*=1$)，才有值。
+							   bounding box regression
+							   ![|center](https://s3.amazonaws.com/f.cl.ly/items/2y063r111r0D041H3Z18/boundingboxreg.png) #### YOLO对照笔记
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h4 id=&quot;overfeat&quot;&gt;OverFeat对照笔记&lt;/h4&gt;
+&lt;p&gt;#### SPP对照笔记
+什么是crop和wrap？&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://d3dr1ze7164817.cloudfront.net/items/2b0Q2F2C3R0P2Y1U3V0h/crop_wrap.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;vocabulary&quot;&gt;Vocabulary&lt;/h5&gt;
+&lt;p&gt;utilize 利用         prevail 盛行
+albeit 即使，尽管      high-end 高档
+truncate 截断        auxiliary 附加的
+be fed into 送入       analogous相似的&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 29 Jul 2016 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/07/29/Single-Shot-MultiBox/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/07/29/Single-Shot-MultiBox/</guid>
+        
+        <category>SSD</category>
+        
+        <category>CNN</category>
+        
+        <category>Detection</category>
+        
+        
+        <category>Object-Detection</category>
+        
+      </item>
+    
+      <item>
+        <title>Obeject Detection基础知识理解</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#obejectdetection-&quot; id=&quot;markdown-toc-obejectdetection-&quot;&gt;ObejectDetection 的基本知识理解&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#roc&quot; id=&quot;markdown-toc-roc&quot;&gt;ROC曲线&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;obejectdetection-&quot;&gt;ObejectDetection 的基本知识理解&lt;/h2&gt;
+
+&lt;p&gt;Recall，precision, Roc等&lt;/p&gt;
+
+&lt;h2 id=&quot;roc&quot;&gt;ROC曲线&lt;/h2&gt;
+&lt;p&gt;ROC: receiver operating characteristic curve
+ss rate = &lt;script type=&quot;math/tex&quot;&gt;\sum_{i=1}^n a_i=0&lt;/script&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;True/False代表判断是对/错的，Positive/Negative代表判断结果，判断分类与对错无关。
+*  True Positive: 判断是正确的，判断结果是正的。
+*  False Positive:判断是错误的，判断结果是正的。也就是说实际上结果应该是负的，我们判断它是正的，所以我们错了。
+*  True Negative: 判断是正确的，判断结果是负的。
+*  False Negative:判断是错误的，判断结果是负的。
+ Precision Recall理解
+&lt;img src=&quot;http://d.pr/i/ZK07&quot; alt=&quot;一张图理解上述知识&quot; /&gt;
+* Precision rate = 
+* Recall rate = 
+* Miss rate = &lt;script type=&quot;math/tex&quot;&gt;\sum_{i=1}^n a_i=0&lt;/script&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+</description>
+        <pubDate>Mon, 25 Jul 2016 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/07/25/ObjectDetection-Base/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/07/25/ObjectDetection-Base/</guid>
+        
+        <category>物体识别</category>
+        
+        
+        <category>ObejectDetection</category>
+        
+      </item>
+    
+      <item>
+        <title>Latex+Sublime+Windows笔记</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;笔记概述&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;准备工作&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;section&quot;&gt;笔记概述&lt;/h3&gt;
+
+&lt;p&gt;TexLive+Sbulime+LatexTools+SumatraPDF
+一个学期在渣笔记本上用WinEdt，觉得越用越不好用。趁有新的电脑，所以专门在知乎上转了一圈，发现大神推荐了这个配置，所以就毫不犹豫的下手了。这篇笔记主要总结一下自己迈过去的一些配置的坑。&lt;/p&gt;
+
+&lt;h3 id=&quot;section-1&quot;&gt;准备工作&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;http://www.sublimetext.com/blog/articles/sublime-text-3-build-3103&quot;&gt;sublime 3 官网&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;D:\software\Sublime Text 3&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/&quot;&gt;texlive 2016清华镜像&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;windows用户直接下载一个.exe就好，不用去下源包。安装时间较长。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://www.sumatrapdfreader.org/free-pdf-reader.html&quot;&gt;sumatrapdf官网&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;C:\Program Files&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Sun, 24 Jul 2016 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/07/24/Latex-Texlive-Sublime/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/07/24/Latex-Texlive-Sublime/</guid>
+        
+        <category>Latex</category>
+        
+        <category>排版</category>
+        
+        <category>Texlive</category>
+        
+        
+        <category>Latex</category>
+        
+      </item>
     
       <item>
         <title>SSD learning Note</title>
@@ -1485,568 +1721,6 @@ console.log(is_array(numbers)) //true
         <category>面向对象</category>
         
         <category>作用域</category>
-        
-        
-        <category>JavaScript</category>
-        
-      </item>
-    
-      <item>
-        <title>浅谈正则表达式中的分组和引用</title>
-        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;问题&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;我的答案&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#section-2&quot; id=&quot;markdown-toc-section-2&quot;&gt;说明&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;由正则表达式如何匹配相同字符出发，讲讲正则表达式中的选择、分组和引用。&lt;/p&gt;
-
-&lt;h2 id=&quot;section&quot;&gt;问题&lt;/h2&gt;
-
-&lt;p&gt;在外刊君读者群中看到有人提出这样的一个需求：&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;把字符串切成连续相同字符的正则怎么写？比如&lt;code class=&quot;highlighter-rouge&quot;&gt;abbcccdddd&lt;/code&gt;切成&lt;code class=&quot;highlighter-rouge&quot;&gt;a,bb,ccc,dddd&lt;/code&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;之前我对正则表达式也是略有研究，想尝试一下。其实我对正则表达式的学习基本完全来源于犀牛书的第10章，真正看懂这一章，我觉得操作正则表达式应该不在话下。&lt;/p&gt;
-
-&lt;h2 id=&quot;section-1&quot;&gt;我的答案&lt;/h2&gt;
-
-&lt;p&gt;先给出我的答案吧：&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s1&quot;&gt;&#39;abbccddd&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;(\w)\1&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;*/g&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// [&quot;a&quot;, &quot;bb&quot;, &quot;cc&quot;, &quot;ddd&quot;]&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;section-2&quot;&gt;说明&lt;/h2&gt;
-
-&lt;p&gt;拿到这个问题，首先要匹配字符&lt;code class=&quot;highlighter-rouge&quot;&gt;[a-zA-Z0-9]&lt;/code&gt;，这里直接使用&lt;code class=&quot;highlighter-rouge&quot;&gt;\w&lt;/code&gt;。然后是全局匹配，在最后加上&lt;code class=&quot;highlighter-rouge&quot;&gt;g&lt;/code&gt;。难点在于怎么判断重复。&lt;/p&gt;
-
-&lt;p&gt;翻看了犀牛书后，又读了一遍分组和引用的部分。使用小括号&lt;code class=&quot;highlighter-rouge&quot;&gt;()&lt;/code&gt;将字符作为一个最小单元，同时小括号还能记忆这个组合相匹配的字符串。再使用反斜杠&lt;code class=&quot;highlighter-rouge&quot;&gt;\&lt;/code&gt;引用前面分组的表达式，数字1表示第一个小括号。这时完成了2个字符重复的要求。最后再使用&lt;code class=&quot;highlighter-rouge&quot;&gt;*&lt;/code&gt;来匹配出现0次或n次。这个正则表达式就写完了。&lt;/p&gt;
-
-&lt;p&gt;下面详细说说分组和引用。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;正则表达式的选择、分组和引用字符表&lt;/strong&gt;&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;字符&lt;/th&gt;
-      &lt;th&gt;含义&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;|&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;选择，匹配的是该符号左边的子表达式或右边的子表达式&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;(...)&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;组合，将几个项组合为一个单元，这个单元可通过&lt;code class=&quot;highlighter-rouge&quot;&gt;*&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;+&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;?&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;|&lt;/code&gt; 等符号加以修饰，&lt;strong&gt;而且可以记住和这个组合相匹配的字符串以提供伺候的引用使用&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;(?:...)&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;只组合，把项组合到一个段元，但不记忆与该组相匹配的字符&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;\n&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;和第n个分组第一次匹配的字符相匹配，组是圆括号中的子表达式（也有可能是嵌套的），组索引是从左到右的左括号数，&lt;code class=&quot;highlighter-rouge&quot;&gt;(?:&lt;/code&gt;形式的分组不编码&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-</description>
-        <pubDate>Fri, 06 May 2016 11:40:18 +0800</pubDate>
-        <link>http://crystalxian.github.io/2016/05/06/regular-expression-group/</link>
-        <guid isPermaLink="true">http://crystalxian.github.io/2016/05/06/regular-expression-group/</guid>
-        
-        <category>正则</category>
-        
-        <category>分组</category>
-        
-        <category>Regular</category>
-        
-        
-        <category>JavaScript</category>
-        
-      </item>
-    
-      <item>
-        <title>对这个 jekyll 博客主题的改版和重构</title>
-        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;改版重构说明&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#rubygems-ssl-&quot; id=&quot;markdown-toc-rubygems-ssl-&quot;&gt;RubyGems 无法访问，SSL 证书问题&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;错误呈现&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-2&quot; id=&quot;markdown-toc-section-2&quot;&gt;解决方法&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#jekyll-paginate-&quot; id=&quot;markdown-toc-jekyll-paginate-&quot;&gt;jekyll-paginate 依赖缺失&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-3&quot; id=&quot;markdown-toc-section-3&quot;&gt;错误呈现&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-4&quot; id=&quot;markdown-toc-section-4&quot;&gt;解决方法&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#foxit-pdf-reader-4000&quot; id=&quot;markdown-toc-foxit-pdf-reader-4000&quot;&gt;被 Foxit pdf reader 占用4000端口&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-5&quot; id=&quot;markdown-toc-section-5&quot;&gt;错误呈现&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#section-6&quot; id=&quot;markdown-toc-section-6&quot;&gt;解决方法&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;本文主要说明对这个博客主题的改版和代码重构的过程。这个简洁高雅的博客主题受到了很多朋友的喜欢。在写第一版界面时，我对前端并不是很熟悉，对&lt;code class=&quot;highlighter-rouge&quot;&gt;Jekyll&lt;/code&gt;也不熟悉。现在距离当时也一年了，对自己当时写的代码也不太满意了，同时&lt;code class=&quot;highlighter-rouge&quot;&gt;Jekyll&lt;/code&gt;如今也已经升级了，目前最新版为3.1.2。因此我在临近毕业尚未入职前做一下博客主题的代码重构和改版吧。&lt;/p&gt;
-
-&lt;p&gt;主要想做这些事情有：添加归档，添加标签，添加分类页面，主页显示文章摘要，代码去除 jQuery 和 BootStrap，优化移动端显示，将所有变量写入配置文件&lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;中等。再优化一些细节吧。希望更多人会喜欢。&lt;/p&gt;
-
-&lt;h2 id=&quot;section&quot;&gt;改版重构说明&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;使用 GitHub 风格的代码块 Markdown 写法 (Fenced code blocks)。&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;即 GFM(github flavored markdown) 的方式。&lt;/p&gt;
-
-    &lt;p&gt;Jekyll 已经升级至 3.1.2（2016-03），其中有一些新的要注意的地方，比如官网上说使用了 &lt;code class=&quot;highlighter-rouge&quot;&gt;Rouge&lt;/code&gt; 去做代码高亮而不是默认的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Pygments&lt;/code&gt;，因为 &lt;code class=&quot;highlighter-rouge&quot;&gt;Jekyll&lt;/code&gt; 本身是基于 Ruby 的，因此我看到官方说希望不再使用基于 Python 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Pygments&lt;/code&gt; 了，而是都使用基于 Ruby 的代码。详情见官网升级说明 &lt;a href=&quot;https://jekyllrb.com/docs/upgrading/2-to-3/#syntax-highlighter-changed&quot;&gt;syntax-highlighter-changed&lt;/a&gt;。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;首页中添加摘要&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;摘要可以在每一篇 md 文件头中使用 excerpt 属性写出来。也可以在正文中，4个换行符来分割，这个设置见配置文件&lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;添加归档&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;上一版中没有归档，现在专门做了一个归档页面，当文章很多时方便根据年份快速查阅。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;添加标签&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;标签还是很有必要添加的，上一版中也没有这个功能。现在也可以根据标签查找文章了。同时标签还有一个重要的作用是，用来获取相似文章的。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;添加分类页&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;之前的分类就是在首页中直接完成的，现在和标签和归档类似，我将分类单独制作为一页，方便查阅。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;去掉 jQuery 和 BootStrap&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;我觉得太重了，没必要使用这两个库，使用原生 JavaScript 和 CSS就可以做到一样的效果，代码量大大减轻，载入速度略有提高。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;重写了demo页的瀑布流布局&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;改变数据写死的方式，将数据用 json 格式录入，由 JavaScript 拼接为 HTML 代码。同时，使用 &lt;a href=&quot;http://masonry.desandro.com/&quot;&gt;Masonry&lt;/a&gt;，重写了瀑布流布局。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;简化评论配置，支持 多说 和 disqus&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;在&lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;中评论配置直接添加自己的&lt;code class=&quot;highlighter-rouge&quot;&gt;short_name&lt;/code&gt;，评论就能正常使用了。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;下面列举一些可能遇到的问题，至少我是遇到了：&lt;/p&gt;
-
-&lt;h2 id=&quot;rubygems-ssl-&quot;&gt;RubyGems 无法访问，SSL 证书问题&lt;/h2&gt;
-
-&lt;p&gt;以前我使用的是 RubyGems 的淘宝镜像&lt;a href=&quot;https://ruby.taobao.org/&quot;&gt;https://ruby.taobao.org/&lt;/a&gt;。现在这个镜像已经不再维护了，作者 &lt;a href=&quot;https://ruby-china.org/huacnlee&quot;&gt;huacnlee (李华顺)&lt;/a&gt; 转到 &lt;a href=&quot;https://ruby-china.org/&quot;&gt;Ruby China&lt;/a&gt; 中继续维护了，详情见 &lt;a href=&quot;https://gems.ruby-china.org/&quot;&gt;RubyGems 镜像- Ruby China&lt;/a&gt;。&lt;/p&gt;
-
-&lt;h3 id=&quot;section-1&quot;&gt;错误呈现&lt;/h3&gt;
-
-&lt;p&gt;在执行任何&lt;code class=&quot;highlighter-rouge&quot;&gt;gem&lt;/code&gt;命令的时候出现以下错误：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ERROR:  While executing gem ... (Gem::RemoteFetcher::FetchError)
-    SSL_connect returned=1 errno=0 state=SSLv3 read server certificate B: certificate verify failed (https://gems.ruby-china.org/specs.4.8.gz)
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;h3 id=&quot;section-2&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;根据 &lt;a href=&quot;https://gems.ruby-china.org/&quot;&gt;https://gems.ruby-china.org/&lt;/a&gt; 页面最下方提供的 GitHub Issue 地址。&lt;/p&gt;
-
-&lt;p&gt;可以进入这个 issue：&lt;a href=&quot;https://github.com/ruby-china/rubygems-mirror/issues/3&quot;&gt;https://github.com/ruby-china/rubygems-mirror/issues/3&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;其中 sanlengjingvv 给出了一个链接地址 &lt;a href=&quot;https://gist.github.com/fnichol/867550&quot;&gt;https://gist.github.com/fnichol/867550&lt;/a&gt; 里面提供了方法。我就是采用这里面的方法解决的。&lt;/p&gt;
-
-&lt;p&gt;我使用的是 &lt;a href=&quot;https://gist.github.com/fnichol/867550#the-manual-way-boring&quot;&gt;The Manual Way&lt;/a&gt;，因为 &lt;a href=&quot;https://gist.github.com/fnichol/867550#the-ruby-way-fun&quot;&gt;The Ruby Way&lt;/a&gt; 我没有成功，不知道什么原因，有兴趣的朋友可以试试。下面说说我的具体操作吧。&lt;/p&gt;
-
-&lt;p&gt;首先从 &lt;a href=&quot;https://curl.haxx.se/ca/cacert.pem&quot;&gt;https://curl.haxx.se/ca/cacert.pem&lt;/a&gt; 将文件&lt;code class=&quot;highlighter-rouge&quot;&gt;cacert.pem&lt;/code&gt;下载至 &lt;code class=&quot;highlighter-rouge&quot;&gt;C:\RailsInstaller\cacert.pem&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;然后执行&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;set SSL_CERT_FILE=C:\RailsInstaller\cacert.pem
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;就成功了，不会再出现 SSL 错误了。&lt;/p&gt;
-
-&lt;p&gt;最后原文中说，为了长久设置，将这个目录存入控制面板中。我没理解是什么意思，是指环境变量吗？有朋友知道的话，欢迎留言告知我。&lt;/p&gt;
-
-&lt;p&gt;我存入环境变量后，还是会出现 SSL 错误，这时再次执行上面那条命令即可。&lt;/p&gt;
-
-&lt;h2 id=&quot;jekyll-paginate-&quot;&gt;jekyll-paginate 依赖缺失&lt;/h2&gt;
-
-&lt;p&gt;因为 jekyll 3 中默认安装已经没有这个分页组件了，官方把这个分页组件插件化了，因此要独立安装。详情见 &lt;a href=&quot;https://jekyllrb.com/docs/pagination/&quot;&gt;https://jekyllrb.com/docs/pagination/&lt;/a&gt;。&lt;/p&gt;
-
-&lt;h3 id=&quot;section-3&quot;&gt;错误呈现&lt;/h3&gt;
-
-&lt;p&gt;在启动 jekyll 服务的时候出现以下错误：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;jekyll serve
-Configuration file: c:/gitWorkSpace/blog-based-on-jekyll-3/_config.yml
-  Dependency Error: Yikes! It looks like you don&#39;t have jekyll-paginate or one of its dependencies installed. In order to use Jekyll as currently configured, you&#39;ll need to install this gem. The full error message from Ruby is: &#39;cannot load such file -- jekyll-paginate&#39; If you run into trouble, you can find helpful resources at http://jekyllrb.com/help/!
-jekyll 3.1.2 | Error:  jekyll-paginate
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;h3 id=&quot;section-4&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;我们安装这个插件到本地即可。&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;gem install jekyll-paginate
-Fetching: jekyll-paginate-1.1.0.gem (100%)
-Successfully installed jekyll-paginate-1.1.0
-Parsing documentation for jekyll-paginate-1.1.0
-Installing ri documentation for jekyll-paginate-1.1.0
-Done installing documentation for jekyll-paginate after 3 seconds
-1 gem installed
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&quot;foxit-pdf-reader-4000&quot;&gt;被 Foxit pdf reader 占用4000端口&lt;/h2&gt;
-
-&lt;h3 id=&quot;section-5&quot;&gt;错误呈现&lt;/h3&gt;
-
-&lt;p&gt;在本地使用命令&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;jekyll serve
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;出现错误，如下&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;jekyll serve
-Configuration file: E:/GitWorkSpace/blog/_config.yml
-           Source: E:/GitWorkSpace/blog
-      Destination: E:/GitWorkSpace/blog/_site
-Incremental build: disabled. Enable with --incremental
-     Generating...
-                   done in 0.547 seconds.
- Please add the following to your Gemfile to avoid polling for changes:
-   gem &#39;wdm&#39;, &#39;&amp;gt;= 0.1.0&#39; if Gem.win_platform?
-Auto-regeneration: enabled for &#39;E:/GitWorkSpace/blog&#39;
-Configuration file: E:/GitWorkSpace/blog/_config.yml
-jekyll 3.1.1 | Error:  Permission denied - bind(2) for 127.0.0.1:4000
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;网上查阅后，这篇博文解决了我的问题。&lt;a href=&quot;http://lxconan.github.io/2016/01/07/who-is-using-my-port/&quot;&gt;谁占了我的端口 for Windows –By Liu Xia, ThoughtWorks Senior Consultant. .NET Expert&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;上述报错主要原因是，jekyll 启动使用的4000端口被福昕pdf阅读器的自动更新进程占用了，关掉这个进程，jekyll在本地调试启动服务时就没有问题了。&lt;/p&gt;
-
-&lt;h3 id=&quot;section-6&quot;&gt;解决方法&lt;/h3&gt;
-
-&lt;p&gt;简单的解决方法是：&lt;/p&gt;
-
-&lt;p&gt;输入命令，查看各端口被占用情况&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;netstat -ano
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;找到4000端口被占用的&lt;code class=&quot;highlighter-rouge&quot;&gt;PID&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;我的结果如下：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;协议  本地地址          外部地址          状态           PID
-TCP  0.0.0.0:80        0.0.0.0:0         LISTENING     4
-TCP  0.0.0.0:135       0.0.0.0:0         LISTENING     836
-TCP  0.0.0.0:445       0.0.0.0:0         LISTENING     4
-TCP  0.0.0.0:1801      0.0.0.0:0         LISTENING     2312
-TCP  0.0.0.0:2103      0.0.0.0:0         LISTENING     2312
-TCP  0.0.0.0:2105      0.0.0.0:0         LISTENING     2312
-TCP  0.0.0.0:2107      0.0.0.0:0         LISTENING     2312
-TCP  0.0.0.0:3306      0.0.0.0:0         LISTENING     2404
-TCP  0.0.0.0:3389      0.0.0.0:0         LISTENING     1172
-TCP  0.0.0.0:49664     0.0.0.0:0         LISTENING     584
-TCP  0.0.0.0:49665     0.0.0.0:0         LISTENING     1072
-TCP  0.0.0.0:49666     0.0.0.0:0         LISTENING     460
-TCP  0.0.0.0:49667     0.0.0.0:0         LISTENING     1000
-TCP  0.0.0.0:49670     0.0.0.0:0         LISTENING     696
-TCP  0.0.0.0:49678     0.0.0.0:0         LISTENING     2312
-TCP  0.0.0.0:49692     0.0.0.0:0         LISTENING     688
-TCP  127.0.0.1:4000    0.0.0.0:0         LISTENING     2476
-TCP  127.0.0.1:4000    127.0.0.1:55160   ESTABLISHED   2476
-TCP  127.0.0.1:4012    0.0.0.0:0         LISTENING     12724
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;可以看到4000端口的PID是2476。下面查看是什么进程，命令行中输入：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;tasklist /svc /FI &quot;PID eq 2476&quot;
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;得到结果：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;映像名称                       PID 服务
-========================= ======== ============================================
-FoxitProtect.exe              2476 FxService
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;可以看到正是福昕阅读器。下面关掉这个服务就好了。在 win10 中进入任务管理器，选择服务选项卡，关闭这个服务就好了，如下图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;http://ww4.sinaimg.cn/large/7011d6cfjw1f1ty28wwj4j20g00aiju7.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;当然也可以在启动jekyll服务的时候指定端口号，如下：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;jekyll serve --port 3000
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;这样在浏览器中输入 http://localhost:3000/ 就可以访问了。&lt;/p&gt;
-
-&lt;p&gt;还可以在配置文件&lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;中添加端口号设置（参考&lt;a href=&quot;https://jekyllrb.com/docs/configuration/#serve-command-options&quot;&gt;官网文档-Serve Command OptionsPermalink&lt;/a&gt;），如下：&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# port
-port: 1234
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;此时，启动jekyll服务后，访问 http://localhost:1234/ 即可&lt;/p&gt;
-</description>
-        <pubDate>Sat, 12 Mar 2016 11:40:18 +0800</pubDate>
-        <link>http://crystalxian.github.io/2016/03/12/jekyll-theme-version-2.0/</link>
-        <guid isPermaLink="true">http://crystalxian.github.io/2016/03/12/jekyll-theme-version-2.0/</guid>
-        
-        <category>jekyll</category>
-        
-        <category>端口</category>
-        
-        <category>markdown</category>
-        
-        <category>Foxit</category>
-        
-        <category>RubyGems</category>
-        
-        <category>HTML</category>
-        
-        <category>CSS</category>
-        
-        
-        <category>jekyll</category>
-        
-      </item>
-    
-      <item>
-        <title>前端处理动态 url 和 pushStatus 的使用</title>
-        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#section&quot; id=&quot;markdown-toc-section&quot;&gt;起因&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#history&quot; id=&quot;markdown-toc-history&quot;&gt;History&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#back-forward-go-length&quot; id=&quot;markdown-toc-back-forward-go-length&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;back()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;forward()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;go()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;length&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#pushstate-replacestate&quot; id=&quot;markdown-toc-pushstate-replacestate&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;replaceState()&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#pjax&quot; id=&quot;markdown-toc-pjax&quot;&gt;pjax&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#section-1&quot; id=&quot;markdown-toc-section-1&quot;&gt;参考&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;section&quot;&gt;起因&lt;/h2&gt;
-
-&lt;p&gt;起因是这样的，在尝试前后端分离的这条道路上，我自己也在不断摸索，感觉要把大部分的坑都踩踩了。目前我用的技术是：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;webpack 自动构建&lt;/li&gt;
-  &lt;li&gt;AMD 模块化 js&lt;/li&gt;
-  &lt;li&gt;Sass 预处理 CSS&lt;/li&gt;
-  &lt;li&gt;使用前端模板引擎 handlebars 解决动态操作将 html 拼接在 js 中的问题&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;但最近写了一个项目类似知乎这样的多页网站。前端 url 的处理让我觉得不够优雅。我使用的是 hash 的方式处理动态 url 的，为此我专门在知乎上提了一个问题：&lt;a href=&quot;https://www.zhihu.com/question/38802932&quot;&gt;前端如何处理动态url？&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;这里我将问题描述如下：&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;前后端彻底分离的情况下，页面跳转页全部由前端控制。那么如何更好的处理动态url地址？
-例如本问题的url为
-https://www.zhihu.com/question/38802932
-这肯定是用后台路由处理的url&lt;/p&gt;
-
-  &lt;p&gt;纯前端怎么处理？用hash吗，如下:
-https://www.zhihu.com/question#38802932
-那如果本页跳转，只改变hash的话，页面不会刷新。
-使用&lt;code class=&quot;highlighter-rouge&quot;&gt;location.reload()&lt;/code&gt;倒是可以解决。&lt;/p&gt;
-
-  &lt;p&gt;&lt;strong&gt;但总觉得这样处理不够优雅。大家在工作中是如何处理此类场景的？还是用传统的后台路由来提供动态url？&lt;/strong&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;感谢郑海波和剧中人的热心回答。都提到了&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象中的&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState&lt;/code&gt;，这是我第一次接触到这方面的内容（顿时觉得自己真是才疏学浅）。&lt;/p&gt;
-
-&lt;p&gt;同时也有人提到了&lt;code class=&quot;highlighter-rouge&quot;&gt;pjax&lt;/code&gt;，这个就是&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState&lt;/code&gt;+&lt;code class=&quot;highlighter-rouge&quot;&gt;Ajax&lt;/code&gt;的封装，也很有意思。&lt;/p&gt;
-
-&lt;p&gt;下面就来研究和实践一下吧。&lt;/p&gt;
-
-&lt;h2 id=&quot;history&quot;&gt;History&lt;/h2&gt;
-
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;window&lt;/code&gt;对象通过&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象提供对浏览器历史记录的访问能力。它暴露了一些非常有用的方法和属性，让你在历史记录中自由前进和后退，而在 HTML5 中，更可以操纵历史记录中的数据。&lt;/p&gt;
-
-&lt;h3 id=&quot;back-forward-go-length&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;back()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;forward()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;go()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;length&lt;/code&gt;&lt;/h3&gt;
-
-&lt;p&gt;浏览器的历史记录就好像一个栈，最新的在最上面，较早之前看过的在下面。&lt;/p&gt;
-
-&lt;p&gt;如下图，Chrome的历史记录：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;http://ww2.sinaimg.cn/large/7011d6cfjw1ezb16fn2bfj20k008htan.jpg&quot; alt=&quot;chrome history&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;下面介绍怎么在这些历史记录中跳转，但要&lt;strong&gt;注意&lt;/strong&gt;，上图中的浏览器历史记录和本文说的 history 还不太同。&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;back()&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;在历史记录中后退&lt;/p&gt;
-
-    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  history.back();
-&lt;/code&gt;&lt;/pre&gt;
-    &lt;/div&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;forward()&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;在历史记录中前进&lt;/p&gt;
-
-    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  history.forward();
-&lt;/code&gt;&lt;/pre&gt;
-    &lt;/div&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go()&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;移动到指定的历史记录点&lt;/p&gt;
-
-    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  history.go(-1);
-&lt;/code&gt;&lt;/pre&gt;
-    &lt;/div&gt;
-
-    &lt;p&gt;通过指定一个相对于当前页面位置的数值，你可以使用go()方法从当前会话的历史记录中加载页面（当前页面位置索引值为0，上一页就是-1，下一页为1）。&lt;/p&gt;
-
-    &lt;p&gt;&lt;strong&gt;go()不填参数或参数为go(0)时，页面会刷新，即&lt;code class=&quot;highlighter-rouge&quot;&gt;history.go()&lt;/code&gt;或&lt;code class=&quot;highlighter-rouge&quot;&gt;history.go(0)&lt;/code&gt;相当于&lt;code class=&quot;highlighter-rouge&quot;&gt;location.reload()&lt;/code&gt;&lt;/strong&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;length&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;length&lt;/code&gt;为history的属性，显示history长度。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;本节在线demo见：&lt;a href=&quot;http://gaohaoyang.github.io/history-pjax-demo/&quot;&gt;History &amp;amp; pjax demo&lt;/a&gt; 源代码：&lt;a href=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;经过亲自测试，&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象只记录同一个 tab 页内的历史。如果是在新窗口打开的，则无效。如：在a标签中添加&lt;code class=&quot;highlighter-rouge&quot;&gt;target=&quot;_blank&quot;&lt;/code&gt;，或按住&lt;code class=&quot;highlighter-rouge&quot;&gt;ctrl&lt;/code&gt;点击，这类场景下，在新的tab页中，&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象也是新的。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;且&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象记录的信息与是否同源也无关，所以唯一要满足的就是同一个标签页。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;pushstate-replacestate&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;replaceState()&lt;/code&gt;&lt;/h3&gt;
-
-&lt;p&gt;HTML5 引进了&lt;code class=&quot;highlighter-rouge&quot;&gt;history.pushState()&lt;/code&gt;方法和&lt;code class=&quot;highlighter-rouge&quot;&gt;history.replaceState()&lt;/code&gt;方法，它们允许你逐条地添加和修改历史记录条目，能够在不加载新页面的情况下没改变浏览器的URL。这些方法可以协同&lt;code class=&quot;highlighter-rouge&quot;&gt;window.onpopstate&lt;/code&gt;事件一起工作。&lt;/p&gt;
-
-&lt;p&gt;使用&lt;code class=&quot;highlighter-rouge&quot;&gt;history.pushState()&lt;/code&gt;会改变&lt;code class=&quot;highlighter-rouge&quot;&gt;referrer&lt;/code&gt;的值，而在你调用方法后创建的  XMLHttpRequest 对象会在 HTTP 请求头中使用这个值。&lt;code class=&quot;highlighter-rouge&quot;&gt;referrer的&lt;/code&gt;值则是创建  XMLHttpRequest 对象时所处的窗口的 URL。&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState(any data, string title, [string url])&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;第一个参数为&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;对象的&lt;code class=&quot;highlighter-rouge&quot;&gt;state&lt;/code&gt;属性值，可以放任意数据，记录历史状态。第二个参数是新状态的标题，目前浏览器基本不支持。第三个参数为可选的相对url。&lt;/p&gt;
-
-    &lt;p&gt;执行&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState&lt;/code&gt;后，可以在不加载新页面的情况下，更改url。同时&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;栈中新增一条数据。&lt;/p&gt;
-
-    &lt;p&gt;例如，我们有这样一段代码：&lt;/p&gt;
-
-    &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &amp;lt;button id=&quot;push1&quot;&amp;gt;pushState()&amp;lt;/button&amp;gt;
-
-  document.querySelector(&#39;#push1&#39;).addEventListener(&#39;click&#39;, function() {
-      history.pushState(&#39;abc&#39;,&#39;pushStatePageTitle&#39;,&#39;pushState.html&#39;);
-      document.querySelector(&#39;#length&#39;).innerHTML = history.length;//重新读取历史长度
-  });
-&lt;/code&gt;&lt;/pre&gt;
-    &lt;/div&gt;
-
-    &lt;p&gt;当点击按钮的时候，页面不会刷新，但&lt;code class=&quot;highlighter-rouge&quot;&gt;url&lt;/code&gt;地址的最后已经变为&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState.html&lt;/code&gt;。这一点非常像&lt;code class=&quot;highlighter-rouge&quot;&gt;hash&lt;/code&gt;的作用，但比&lt;code class=&quot;highlighter-rouge&quot;&gt;hash&lt;/code&gt;更优雅。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;replaceState(any data, string title, [string url])&lt;/code&gt;&lt;/p&gt;
-
-    &lt;p&gt;与&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;类似，只是在&lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt;栈中不是新增记录，而是替换一条记录。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;strong&gt;需要注意的是：&lt;/strong&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;replaceState()&lt;/code&gt;方法存在安全方面的限制，本地测试是无效的，会报错，可以简单放到任何服务端测试，或者使用&lt;code class=&quot;highlighter-rouge&quot;&gt;http-server&lt;/code&gt;开启简单服务器，通过访问&lt;code class=&quot;highlighter-rouge&quot;&gt;localhost&lt;/code&gt;来查看效果。&lt;/p&gt;
-
-&lt;p&gt;本节demo见：&lt;a href=&quot;http://gaohaoyang.github.io/history-pjax-demo/index.html&quot;&gt;History &amp;amp; pjax demo - pushState&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;pjax&quot;&gt;pjax&lt;/h2&gt;
-
-&lt;p&gt;现在再看本文一开始提出的问题，如何让前端优雅的控制 url，这里就可以考虑 pjax 技术了。我们把 pushState + ajax 进行封装，合起来简称为 pjax。虽然不是什么新的技术，但概念已然不同。&lt;/p&gt;
-
-&lt;p&gt;如果不使用 pjax。我们依然可以使用&lt;code class=&quot;highlighter-rouge&quot;&gt;hash&lt;/code&gt;来实现文本开始的需求。但会不利于 SEO，看着也不够优雅。&lt;/p&gt;
-
-&lt;p&gt;Pjax的原理十分简单。&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;拦截 a 标签的默认跳转动作或某些按钮的点击事件。&lt;/li&gt;
-  &lt;li&gt;使用 Ajax 请求新页面。&lt;/li&gt;
-  &lt;li&gt;将返回的 Html 替换到页面中。&lt;/li&gt;
-  &lt;li&gt;使用 HTML5 的&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;修改Url。&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;个人理解3中也可以仅仅请求数据，再由浏览器渲染。&lt;/p&gt;
-
-&lt;p&gt;每当同一个文档的浏览历史（即history对象）出现变化时，会触发&lt;code class=&quot;highlighter-rouge&quot;&gt;window.onpopstate&lt;/code&gt;事件。&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;window.onpopstate = function(event) {
-    console.log(event.state);
-    console.log(location);
-};
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-
-&lt;p&gt;这样在用户点击前进后退时也可以很好的监听url，来做相应的页面渲染。&lt;/p&gt;
-
-&lt;p&gt;若用户刷新了页面，但没有相应的页面资源，这时页面就会显示不存在。所以我认为较好的方法是在写&lt;code class=&quot;highlighter-rouge&quot;&gt;pushState()&lt;/code&gt;第三个参数的时候，写为&lt;code class=&quot;highlighter-rouge&quot;&gt;?a=1&lt;/code&gt;这样的参数形式。&lt;a href=&quot;https://github.com/browserstate/history.js&quot;&gt;History.js&lt;/a&gt; 也是这么写的。但是这样应该会多一次请求。也许使用 nodeJS 作为中间层会好一些吧。&lt;/p&gt;
-
-&lt;p&gt;对于上述的探索，不知道是不是我还不够深入，总觉得还是不够完美。&lt;/p&gt;
-
-&lt;h2 id=&quot;section-1&quot;&gt;参考&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/API/History&quot;&gt;MDN History&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://developer.mozilla.org/zh-CN/docs/DOM/Manipulating_the_browser_history&quot;&gt;MDN 操纵浏览器的历史记录&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://www.zhihu.com/question/20289254&quot;&gt;pjax 是如何工作的？ 知乎&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://www.cnblogs.com/hustskyking/p/history-api-in-html5.html&quot;&gt;PJAX的实现与应用 小胡子哥&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://www.ruanyifeng.com/blog/2011/03/url_hash.html&quot;&gt;URL的井号-阮一峰&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://javascript.ruanyifeng.com/bom/history.html&quot;&gt;history对象 JavaScript 标准参考教程（alpha） 阮一峰&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://www.ayqy.net/blog/pjaxpushstate-and-ajax/&quot;&gt;Pjax(pushState and Ajax) 黯羽轻扬&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://www.clanfei.com/2012/09/1646.html&quot;&gt;操纵历史，利用HTML5 History API实现无刷新跳转 蓝飞&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;http://segmentfault.com/a/1190000002920768&quot;&gt;前端：将网站打造成单页面应用SPA（一） Coffce&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/Coffcer/coffce-pjax&quot;&gt;coffce-pjax&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/browserstate/history.js&quot;&gt;History.js&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/defunkt/jquery-pjax&quot;&gt;defunkt/jquery-pjax GitHub&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/welefen/pjax&quot;&gt;welefen/pjax&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-        <pubDate>Fri, 01 Jan 2016 07:06:05 +0800</pubDate>
-        <link>http://crystalxian.github.io/2016/01/01/History-API/</link>
-        <guid isPermaLink="true">http://crystalxian.github.io/2016/01/01/History-API/</guid>
-        
-        <category>JavaScript</category>
-        
-        <category>Ajax</category>
-        
-        <category>URL</category>
-        
-        <category>HistoryApi</category>
-        
-        <category>pushState</category>
-        
-        <category>pjax</category>
         
         
         <category>JavaScript</category>
