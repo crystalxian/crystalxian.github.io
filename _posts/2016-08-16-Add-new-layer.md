@@ -11,6 +11,10 @@ tags: Caffe Layer
 
 ## Developing new loss layers
 
+
+
+
+
 - Add a class declaration for smooth_L1_loss_layer layer to `include/caffe/layers/smooth_L1_loss_layer.hpp`. 
   * Include an inline implementation of `type` overriding the method `virtual inline const char* type() const { return "SmoothL1Loss"; }` 
   * Implement the `MinBottomBlobs()` methods to specify minimum blob number requirements; `MaxBottomBlobs()` methods to specify maximum blob number requirements.
