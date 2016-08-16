@@ -6,14 +6,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>前端的一些资料和工具</title>
-    <meta name="description" content="记录一些好用的前端工具和框架。">
+    <title>Caffe安装</title>
+    <meta name="description" content="  安装两点记录安装两点记录  CPU的安装Makefile.config  GPU的安装过程中      出现的boost版本过高的问题        cmake出错的问题  ">
 
     <link rel="shortcut icon" href="/favicon.ico?" type="image/x-icon">
     <link rel="icon" href="/favicon.ico?" type="image/x-icon">
     <link rel="stylesheet" href=" /css/fontawesome/css/font-awesome.min.css ">
     <link rel="stylesheet" href=" /css/main.css ">
-    <link rel="canonical" href="http://crystalxian.github.io/2015/05/18/front-end-tools/">
+    <link rel="canonical" href="http://crystalxian.github.io/2016/08/11/Caffe-Install/">
     <link rel="alternate" type="application/rss+xml" title="DzX" href="http://crystalxian.github.io /feed.xml ">
 
 
@@ -136,11 +136,11 @@
 
         <div class="page clearfix" post>
     <div class="left">
-        <h1>前端的一些资料和工具</h1>
+        <h1>Caffe安装</h1>
         <div class="label">
 
             <div class="label-card">
-                <i class="fa fa-calendar"></i>2015-05-18
+                <i class="fa fa-calendar"></i>2016-08-11
             </div>
 
             <div class="label-card">
@@ -160,7 +160,7 @@
   <i class="fa fa-th-list"></i>
   
     
-        <a href="/category/#Tools" title="Category: Tools" rel="category">Tools</a>
+        <a href="/category/#Caffe" title="Category: Caffe" rel="category">Caffe</a>
     
   
 
@@ -177,17 +177,8 @@
   <i class="fa fa-tags"></i>
   
     
-        <!--a href="/tag/#tools" title="Tag: tools" rel="tag">tools</a-->
-        <a href="/tag/#tools" title="Tag: tools" rel="tag">tools</a>&nbsp;
-    
-        <!--a href="/tag/#CSS" title="Tag: CSS" rel="tag">CSS</a-->
-        <a href="/tag/#CSS" title="Tag: CSS" rel="tag">CSS</a>&nbsp;
-    
-        <!--a href="/tag/#reveal" title="Tag: reveal" rel="tag">reveal</a-->
-        <a href="/tag/#reveal" title="Tag: reveal" rel="tag">reveal</a>&nbsp;
-    
-        <!--a href="/tag/#%E9%85%8D%E8%89%B2" title="Tag: 配色" rel="tag">配色</a-->
-        <a href="/tag/#配色" title="Tag: 配色" rel="tag">配色</a>
+        <!--a href="/tag/#Caffe" title="Tag: Caffe" rel="tag">Caffe</a-->
+        <a href="/tag/#Caffe" title="Tag: Caffe" rel="tag">Caffe</a>
     
   
 
@@ -199,176 +190,93 @@
         <hr>
         <article itemscope itemtype="http://schema.org/BlogPosting">
         <ul id="markdown-toc">
-  <li><a href="#section" id="markdown-toc-section">色彩与图标</a>    <ul>
-      <li><a href="#css" id="markdown-toc-css">CSS滤镜</a></li>
-      <li><a href="#css-1" id="markdown-toc-css-1">渐变CSS代码生成器</a></li>
-      <li><a href="#qq-16" id="markdown-toc-qq-16">QQ截图取色-16进制</a></li>
-      <li><a href="#section-1" id="markdown-toc-section-1">配色</a></li>
-      <li><a href="#section-2" id="markdown-toc-section-2">图标</a></li>
-    </ul>
-  </li>
-  <li><a href="#section-3" id="markdown-toc-section-3">数据处理</a>    <ul>
-      <li><a href="#json" id="markdown-toc-json">Json</a></li>
-    </ul>
-  </li>
-  <li><a href="#section-4" id="markdown-toc-section-4">展示</a>    <ul>
-      <li><a href="#revealjs" id="markdown-toc-revealjs">reveal.js</a></li>
-    </ul>
-  </li>
+  <li><a href="#section" id="markdown-toc-section">安装两点记录</a></li>
 </ul>
 
-<p>这里记录一些我用到的或者见到的比较好用方便的前端开发相关的工具吧。</p>
+<h2 id="section">安装两点记录</h2>
+
+<blockquote>
+  <p>CPU的安装Makefile.config</p>
+</blockquote>
+
+<blockquote>
+  <p>GPU的安装过程中</p>
+</blockquote>
+
+<ol>
+  <li>
+    <p>出现的boost版本过高的问题</p>
+  </li>
+  <li>
+    <p>cmake出错的问题</p>
+  </li>
+</ol>
+
+<hr />
+<p>CPU安装在虚拟机上的<a href="https://drive.google.com/open?id=0B1zyWUhQhBdWWkFxcG5KNS1WSDA">Makefile.config</a></p>
+
+<ol>
+  <li>加上（位置无所谓）</li>
+</ol>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>LIBRARIES += glog gflags protobuf leveldb snappy \
+             lmdb boost_system hdf5_hl hdf5 m \
+             opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
+</code></pre>
+</div>
+
+<ol>
+  <li>
+    <p>去掉’CPU_ONLY :=1’前面的注释</p>
+  </li>
+  <li>
+    <p>如果要用PYTHON_LAYER，去掉相应行前的注释</p>
+  </li>
+  <li>
+    <p><a href="http://blog.csdn.net/striker_v/article/details/51615197">hdf5的错误</a></p>
+  </li>
+</ol>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>INCLUDE_DIRS := $(PYTHON_INCLUDE) /usr/local/include /usr/include/hdf5/serial/
+LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu/hdf5/serial /usr/include/hdf5/serial
+</code></pre>
+</div>
 
 <hr />
 
-<h2 id="section">色彩与图标</h2>
+<p>GPU安装<a href="https://drive.google.com/open?id=0B1zyWUhQhBdWdDR5ek5pTUNtcVE">Makefile.config</a></p>
 
-<h3 id="css">CSS滤镜</h3>
-
-<ul>
+<ol>
   <li>
-    <p><a href="http://www.cssreflex.com/css-generators/filter">Filter Effects</a></p>
-
-    <p>界面：</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-filter.png" alt="Filter Effects" /></p>
-
-    <p>有各种各样的滤镜效果，可以直接调节参数观察变化。</p>
-
-    <p>值得一提的是，这个网站还有很多其他 css 生成器。</p>
-
-    <p>比如：Border Image, Border Radius, Box Shadow, Filter Effects, Multi-Column, Outline Border, Overflow(x,y), RGBa, Text Rotate, Text Shadow, Textarea Resize, Transform</p>
+    <p>boost版本需要&lt;1.6，否则会有问题</p>
   </li>
   <li>
-    <p>可以访问这里去使用这些 css 生成器：<a href="http://www.cssreflex.com/css-generators/">CSS Generators</a></p>
+    <p>cmake的问题，SSD-caffe的安装也出现了这个问题。</p>
   </li>
-</ul>
+</ol>
 
-<hr />
+<div class="highlighter-rouge"><pre class="highlight"><code>error: ‘memcpy’ was not declared in this scope
+   return (char *) memcpy (__dest, __src, __n) + __n;
+</code></pre>
+</div>
 
-<h3 id="css-1">渐变CSS代码生成器</h3>
+<p>解决方案</p>
 
-<ul>
-  <li>
-    <p><a href="http://www.colorzilla.com/gradient-editor/">Ultimate CSS Gradient Generator</a></p>
+<div class="highlighter-rouge"><pre class="highlight"><code>cd cmake-&gt;cuda.cmake
+   if(UNIX OR APPLE)
+    	list(APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC -D_FORCE_INLINES)
+   endif()
+</code></pre>
+</div>
+<p><img src="https://cl.ly/2J1a1r103u2B/CUDA.png" alt="compare" /></p>
 
-    <p>界面如下图：</p>
+<p>错误+解决方案</p>
 
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-color-gradient.png" alt="Ultimate CSS Gradient Generator" /></p>
+<div class="highlighter-rouge"><pre class="highlight"><code>error: make mistake  -lhdf5 cannot find
+use cmake -DCMAKE-PREFIX-INSTALL=/anywhere you want 
+</code></pre>
+</div>
 
-    <p>目前 css 写渐变还很复杂，但是用了这个工具简直太方便了，直接生成 css 代码，还能兼容 ie。</p>
-  </li>
-</ul>
-
-<hr />
-
-<h3 id="qq-16">QQ截图取色-16进制</h3>
-
-<p>在按下 <code class="highlighter-rouge">Ctrl+Shift+A</code> 后，再按一下 <code class="highlighter-rouge">Ctrl</code> 就可以看到截图框下面的颜色代码变成16进制的代码了。</p>
-
-<p>如下图：</p>
-
-<p>普通截图：</p>
-
-<p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-RBGScreenColor.png" alt="normal" /></p>
-
-<p>按住 <code class="highlighter-rouge">Ctrl</code>：</p>
-
-<p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-hexSreenColor.png" alt="press ctrl" /></p>
-
-<p>可以看到第一幅图中的 51, 51, 51 变成了 #333333。</p>
-
-<hr />
-
-<h3 id="section-1">配色</h3>
-
-<ul>
-  <li>
-    <p><a href="http://nipponcolors.com/">nipponcolors</a></p>
-
-    <p>日本的一个配色网站。罗列了很多不饱和经典的颜色，当然，自己选配还是很重要的。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-chooseColor.png" alt="nipponcolors" /></p>
-  </li>
-  <li>
-    <p><a href="https://color.adobe.com/zh/explore/most-popular/?time=all">Adobe Color CC</a></p>
-
-    <p>Adobe 出的在线配色工具，里面有些现成的配色方案还是很不错的。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-adobeColorCC.png" alt="Adobe Color CC" /></p>
-  </li>
-  <li>
-    <p><a href="http://paletton.com/">paletton</a></p>
-
-    <p>提供了各种预览模式，可以在模板网站中预览，在色块中预览。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-paletton.png" alt="paletton" /></p>
-  </li>
-</ul>
-
-<hr />
-
-<h3 id="section-2">图标</h3>
-
-<ul>
-  <li>
-    <p><a href="http://www.easyicon.net/">easyicon</a></p>
-
-    <p>对中文的搜索支持很好。实际上它是先把中文翻译为英文再搜索的。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-icon.png" alt="easyicon" /></p>
-  </li>
-  <li>
-    <p><a href="http://fortawesome.github.io/Font-Awesome/icons/">Font-Awesome</a></p>
-
-    <p>比上面介绍的那个好用的多，字体图标，不需要考虑像素大小，全部是矢量图。并且图标精美。如果不使用 BootStrap，单独添加图标的话，这一套图标在合适不过了。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-font awesome.png" alt="Font-Awesome" /></p>
-  </li>
-  <li>
-    <p><a href="http://www.iconfont.cn/">iconfont.cn</a></p>
-
-    <p>阿里巴巴制作的图标库。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/iconfont.png" alt="iconfont" /></p>
-  </li>
-</ul>
-
-<hr />
-
-<h2 id="section-3">数据处理</h2>
-
-<h3 id="json">Json</h3>
-
-<ul>
-  <li>
-    <p><a href="http://braincast.nl/samples/jsoneditor/">json editor</a></p>
-
-    <p>将json数据输入进去，会生成一个树形的结构，方便查看每个节点。</p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-json.png" alt="jsoneditor" /></p>
-  </li>
-</ul>
-
-<hr />
-
-<h2 id="section-4">展示</h2>
-
-<h3 id="revealjs">reveal.js</h3>
-
-<ul>
-  <li>
-    <p><a href="https://github.com/hakimel/reveal.js">reveal.js</a></p>
-
-    <p>在网页上展示 slides 幻灯片，太酷了。针对不会代码的人还有一个在线编辑器：<a href="http://slides.com">http://slides.com</a></p>
-
-    <p>还有一个新手入门教程：<a href="http://htmlcheats.com/reveal-js/reveal-js-tutorial-reveal-js-for-beginners/">Reveal.js Tutorial-Reveal.js for Beginners</a></p>
-
-    <p><img src="http://7q5cdt.com1.z0.glb.clouddn.com/blog-revealjs.png" alt="reveal" /></p>
-  </li>
-</ul>
-
-<p>本文不定期更新。</p>
 
         </article>
         <hr>
@@ -379,33 +287,20 @@
             
                 
                     
-                
-                    
-                
-                    
-                
-                    
-                
-            
-                
-                    
-                
-                    
-                
-                    
-                
+                        
+                        <h2 id="similar_posts">Similar Posts</h2>
+                        <ul>
+                        
+                        <li class="relatedPost">
+                            <a href="http://crystalxian.github.io/2016/08/15/Caffe-Blob/">Caffe Blob源码解读
+                            
+                            </a>
+                        </li>
+                        
+                        
                     
                 
             
-        
-            
-            
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
@@ -416,9 +311,18 @@
                 
                     
                 
-                    
+            
+        
+            
+            
                 
                     
+                
+            
+                
+                    
+                
+            
                 
                     
                 
@@ -429,9 +333,10 @@
                 
                     
                 
-                    
-                
-                    
+            
+        
+            
+            
                 
                     
                 
@@ -439,19 +344,7 @@
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
@@ -462,9 +355,11 @@
                 
                     
                 
-                    
+            
                 
                     
+                
+            
                 
                     
                 
@@ -475,29 +370,11 @@
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
@@ -508,29 +385,11 @@
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
@@ -541,9 +400,7 @@
                 
                     
                 
-                    
-                
-                    
+            
                 
                     
                 
@@ -551,19 +408,7 @@
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
@@ -574,90 +419,27 @@
                 
                     
                 
-                    
-                
-                    
-                
-                    
-                
             
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-            
-                
-                    
-                
-                    
-                
-                    
                 
                     
                 
             
         
-            
-            
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-            
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-            
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-            
-                
-                    
-                
-                    
-                
-                    
-                
-                    
-                
-            
         
+            </ul>
         
 
         <div class="post-recent">
     
     <div class="pre">
 
-        <p><strong>上一篇</strong> <a href="/2015/04/23/baidu-ife-2-javascript/">百度Web前端技术学院(2)-JavaScript 基础</a></p>
+        <p><strong>上一篇</strong> <a href="/2016/07/29/Single-Shot-MultiBox/">SSD learning Note</a></p>
         
     </div>
     <div class="nex">
 
         
-        <p><strong>下一篇</strong> <a href="/2015/05/20/scope/">JavaScript 作用域和作用域链</a></p>
+        <p><strong>下一篇</strong> <a href="/2016/08/12/Linux-Skill/">Linux Skill</a></p>
         
     </div>
 </div>
@@ -675,8 +457,8 @@
      */
 
     var disqus_config = function() {
-        this.page.url = 'http://crystalxian.github.io/2015/05/18/front-end-tools/'; // Replace PAGE_URL with your page's canonical URL variable
-        this.page.identifier = 'http://crystalxian.github.io/2015/05/18/front-end-tools/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        this.page.url = 'http://crystalxian.github.io/2016/08/11/Caffe-Install/'; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = 'http://crystalxian.github.io/2016/08/11/Caffe-Install/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
     };
 
     (function() { // DON'T EDIT BELOW THIS LINE

@@ -13,13 +13,17 @@ tags: Caffe
 
 > CPU的安装Makefile.config
 
-> GPU的安装过程中出现的boost版本过高的问题
+> GPU的安装过程中
+
+1. 出现的boost版本过高的问题
+
+2. cmake出错的问题
 
 
 
 
 ---
-CPU安装在虚拟机上的Makefile.config
+CPU安装在虚拟机上的[Makefile.config](https://drive.google.com/open?id=0B1zyWUhQhBdWWkFxcG5KNS1WSDA)
 
 1. 加上（位置无所谓）
 
@@ -29,9 +33,9 @@ LIBRARIES += glog gflags protobuf leveldb snappy \
              opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs
 ```
 
-2. 去掉'CPUONLY :=1'前面的注释
+2. 去掉'CPU\_ONLY :=1'前面的注释
 
-3. 如果要用PYTHON-LAYER，去掉相应行前的注释
+3. 如果要用PYTHON\_LAYER，去掉相应行前的注释
 
 4.  [hdf5的错误](http://blog.csdn.net/striker_v/article/details/51615197)
 
@@ -42,11 +46,11 @@ LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu/
 
 ---
 
-GPU安装
+GPU安装[Makefile.config](https://drive.google.com/open?id=0B1zyWUhQhBdWdDR5ek5pTUNtcVE)
 
 1. boost版本需要<1.6，否则会有问题
 
-2. cmake的问题，SSD的安装也出现了这个问题。
+2. cmake的问题，SSD-caffe的安装也出现了这个问题。
 
 ```
 error: ‘memcpy’ was not declared in this scope
