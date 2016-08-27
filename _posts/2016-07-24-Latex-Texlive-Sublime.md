@@ -19,7 +19,6 @@ TexLive+Texstudio
 ### 准备工作
 ~~[sublime 3 官网](http://www.sublimetext.com/blog/articles/sublime-text-3-build-3103)~~
 
-~~ D:\software\Sublime Text 3  ~~
 
 [texlive 2016清华镜像](https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/)
 
@@ -35,4 +34,3 @@ windows用户直接下载一个.exe就好，不用去下源包。安装时间较
 
 ~~[sumatrapdf官网](http://www.sumatrapdfreader.org/free-pdf-reader.html)~~
 
-~~ C:\Program Files ~~
