@@ -32,5 +32,11 @@ windows用户直接下载一个.exe就好，不用去下源包。安装时间较
 
 > 在系统变量 path 增加一个项：C:\Windows\System32;
 
-~~[sumatrapdf官网](http://www.sumatrapdfreader.org/free-pdf-reader.html)~~
+安装成功后将Texlive的安装目录下/bin/win32放在系统Path下。
 
+Texstudio直接去官网下就好了。
+
+### 配置TexStudio
+可以在options/configue 修改各个配置选项。
+1. General中可以选择语言。
+2. 在粘贴过程中保持缩进。`拷贝代码的时候`!（方法）[https://pic3.zhimg.com/9f3f519fd18b54dc77ae841714a9501e_b.png]
