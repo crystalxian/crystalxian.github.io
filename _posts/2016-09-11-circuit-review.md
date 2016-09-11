@@ -14,4 +14,4 @@ tags: circuit
 
 
 
-![](https://github.com/crystalxian/images/blob/master/1.PNG)
+![](https://github.com/crystalxian/images/blob/master/1.PNG?raw=true)
