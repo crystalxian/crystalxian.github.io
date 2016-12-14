@@ -23,4 +23,5 @@ ASR(Automatic speech recognition)　speech-to-text transcription
 3. Acoustic environment Noise, competing speakers, channel conditions (microphone, phone line, room acoustics)
 4. Style Continuously spoken or isolated? Planned monologue or spontaneous conversation?
 
-* 
+* Data-driven machine learning: Construct simple models of speech which can be learned from large amounts of data
+(thousands of hours of speech recordings)
