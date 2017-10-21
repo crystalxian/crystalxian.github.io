@@ -63,10 +63,9 @@ tags: DeepLearning
 
 参考文章
 
-1.
-[一篇很好的翻译](http://blog.csdn.net/Quincuntial/article/details/76457409?locationNum=7&fps=1)
+1. [一篇很好的翻译](http://blog.csdn.net/Quincuntial/article/details/76457409?locationNum=7&fps=1)
 
-2. [一篇不错的总结](http://blog.csdn.net/stdcoutzyx/article/details/40759903?winzoom=1)
+2.  [一篇不错的总结](http://blog.csdn.net/stdcoutzyx/article/details/40759903?winzoom=1)
 
-3.[一篇对卷积和pooling的总结，有对1*1卷积的介绍]（http://www.cnblogs.com/zf-blog/p/6075286.html)
+3.  [一篇对卷积和pooling的总结，有对1*1卷积的介绍](http://www.cnblogs.com/zf-blog/p/6075286.html)
 
