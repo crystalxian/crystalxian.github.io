@@ -36,9 +36,9 @@ tags: DeepLearning
 
 *    Detection task’s leading approach is Regions with Convolutional Neural Networks(R-CNN) (参考文献6)。该方法分为两步：
  
-    *   First utilize low-level cues such as color and superpixel consistency for potential object proposals in a category-agnostic fashion.
+    1.   First utilize low-level cues such as color and superpixel consistency for potential object proposals in a category-agnostic fashion.
 
-    *   Then use CNN classifiers to identity object categories at those locations.
+    2.   Then use CNN classifiers to identity object categories at those locations.
 
 ## Motivation and High level considerations
 
