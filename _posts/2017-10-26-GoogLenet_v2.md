@@ -45,9 +45,11 @@ map的宽和高都应该逐渐减小，不能一下子变得很小。另外输�
 ### 分解为小卷积
 
 将5x5的卷积替换成两个3x3的卷积叠加。
+
 ![](https://pic4.zhimg.com/v2-114869f84a1057f4575042d3424b42e3_b.jpg)
 
 参数量和计算量都有所下降。
+
 >Q: If we would naivly slide a network without reusing the computation between neighboring grid tiles, we would increase the computational cost. sliding this network
 can be represented by two 3x3 convolutional layers which reuses the
 activations between 'adjacent tiles'.  This way, we end up with a net 9+9/25 x
@@ -58,9 +60,13 @@ ter is used exactly once in the computation of the activation of each unit.
 非线性激活会提高性能，相比较与线性激活。
 
 ### 空间分解为不对称的卷积核
+
 ![](http://img.blog.csdn.net/20170329151510550?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd3NwYmE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
 3x3卷积核改为3x1和1x3的卷积核，降低了33%的计算量。Generally，衍生出以下结构：
+
 ![](http://img.blog.csdn.net/20170329151851164?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd3NwYmE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
 但是作者发现，在较前面使用这种结构效果不好，在mxm的中间的feature
 map上，其中m在12到20之间，效果比较好。
 
@@ -70,8 +76,11 @@ map上，其中m在12到20之间，效果比较好。
 或者dropout层时，会有性能的提高。
 
 ### 有效降低特征图的大小
+
 为了避免第一条准则中提到的计算瓶颈所造成的的信息损失，一般会通过增加滤波器的数量来保持表达能力，但是计算量会增加。作者提出了一种并行的结构，使用两个并行的步长为2的模块，P和C。P是一个池化层，C是一个卷积层，然后将两个模型的响应组合到一起：
+
 ![](http://img.blog.csdn.net/20170329153342989?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd3NwYmE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
 这样既没有造成信息提取上的损失，也能够很好的降低维度。
 
 参考文章
