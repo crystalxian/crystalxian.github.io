@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>DzX</title>
+    <description>Liquid error: undefined method `gsub' for nil:NilClass</description>
+    <link>http://crystalxian.github.io/</link>
+    <atom:link href="http://crystalxian.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>2017-10-23 15:16:22 +0800</pubDate>
+    <lastBuildDate>2017-10-23 15:16:22 +0800</lastBuildDate>
+    <generator>Jekyll v</generator>
+    
+      <item>
+        <title>Going Deeper with convolutions</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#main-contribution&quot;&gt;Main Contribution&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#ralated-work&quot;&gt;Ralated Work&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#motivation-and-high-level-considerations&quot;&gt;Motivation and High level considerations&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#drawback-of-increasing-cnn-size-directly&quot;&gt;Drawback of increasing CNN size directly:&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#how-to-solve-it&quot;&gt;How to solve it?&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;imageNet2014的比赛，论文中的方法是比赛的第一名，包括task1分类任务和task2检测任务。本文主要关注针对计算机视觉的高效深度神经网络结构，通过改进神经网络的结构达到不增加计算资源需求的前提下提高网络的深度，从而达到提高效果的目的。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;main-contribution&quot;&gt;Main Contribution&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Improve utilization of the computing resources inside the network, which is achieved by carefully crafted design and allows for increasing the&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;depth and width of the network while keeping the computational budget constant.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Architecture decisions are based on the Hebbian principle and the intuition of multi-scale processing.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;A 22 layers deep network is assessed in the competition.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;ralated-work&quot;&gt;Ralated Work&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;本文提出的网络结构为Inception，得名于论文参考文献12（network in  network）。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Recent trend of CNN is to increase the number of layers and layer size, while using dropout to address the problem of overfitting。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;论文参考文献15使用不同尺度的Gabor过滤器来处理多尺度问题，同本文的Inception Model类似。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;本文借鉴参考论文12，使用了很多1×1的卷积核。卷积核在本文中的作用主要在于降维，以此来去除计算瓶颈。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Detection task’s leading approach is Regions with Convolutional Neural Networks(R-CNN) (参考文献6)。该方法分为两步：&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code&gt;*   First utilize low-level cues such as color and superpixel consistency for potential object proposals in a category-agnostic fashion.
+
+*   Then use CNN classifiers to identity object categories at those locations.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&quot;motivation-and-high-level-considerations&quot;&gt;Motivation and High level considerations&lt;/h2&gt;
+
+&lt;h3 id=&quot;drawback-of-increasing-cnn-size-directly&quot;&gt;Drawback of increasing CNN size directly:&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;More prone to overfitting.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Dramatically increase use of computational resources. (for example, if most weights end up to be close to zero,then lots of computations is wasted.)&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;how-to-solve-it&quot;&gt;How to solve it?&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;The fundamental way would be by ultimately moving from fully connected to sparsely connected architectures.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;论文的参考文献2表明，考虑到统计相关性，一个稀疏网络结构可以重新构建出最优结构。并产生了Hebbian principle——neurons that fire together, wire together。&lt;/p&gt;
+
+    &lt;blockquote&gt;
+      &lt;p&gt;解决以上问题的根本方法就是把全连接的网络变为稀疏连接（卷积层其实就是一个稀疏连接），当某个数据集的分布可以用一个稀疏网络表达的时候就可以通过分析某些激活值的相关性，将相关度高的神经元聚合，来获得一个稀疏的表示。这种方法也呼应了Hebbian
+principle，一个很通俗的现象，先摇铃铛，之后给一只狗喂食，久而久之，狗听到铃铛就会口水连连。这也就是狗的“听到”铃铛的神经元与“控制”流口水的神经元之间的链接被加强了，而Hebbian principle的精确表达就是如果两个神经元常常同时产生动作电位，或者说同时激动（fire），这两个神经元之间的连接就会变强，反之则变弱（neurons that fire together, wire together）&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;从更底层考虑，现在的硬件在非一致的稀疏数据结构上的计算非常的不高效。尤其是在这些数据上使用已经为密集矩阵优化过的库时。自从论文11以来，都会使用随机稀疏的网络打破对称性，提高学习率。但是论文9又重新使用全连接结构来得到优化的并行计算。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Inception架构开始是作为案例研究，用于评估一个复杂网络拓扑构建算法的假设输出，该算法试图近似[2]中所示的视觉网络的稀疏结构，并通过密集的、容易获得的组件来覆盖假设结果。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;参考文章&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://blog.csdn.net/Quincuntial/article/details/76457409?locationNum=7&amp;amp;fps=1&quot;&gt;一篇很好的翻译&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://blog.csdn.net/shuzfan/article/details/50738394&quot;&gt;一篇很不错的总结&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://www.cnblogs.com/zf-blog/p/6075286.html&quot;&gt;一篇对卷积和pooling的总结，有对1*1卷积的介绍&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+</description>
+        <pubDate>2017-10-20 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2017/10/20/GoogleNet/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2017/10/20/GoogleNet/</guid>
+        
+        <category>DeepLearning</category>
+        
+        
+        <category>Model</category>
+        
+      </item>
+    
+      <item>
+        <title>TwoSum Python</title>
+        <description>
+&lt;p&gt;TwoSum &lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+class Solution(object):
+    def twoSum(self, nums, target):
+        &quot;&quot;&quot;
+        :type nums: List[int]
+        :type target: int
+        :rtype: List[int]
+        &quot;&quot;&quot;
+        for i in range(0,len(nums)):
+            for j in range(i+1,len(nums)):
+                if nums[i] + nums[j] == target:
+                    return [i,j]
+&lt;/code&gt;&lt;/p&gt;
+</description>
+        <pubDate>2017-08-30 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2017/08/30/LeetCode-TwoSum/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2017/08/30/LeetCode-TwoSum/</guid>
+        
+        <category>TwoSum</category>
+        
+        
+        <category>LeetCode</category>
+        
+        <category>Python</category>
+        
+      </item>
+    
+      <item>
+        <title>Python</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#python&quot;&gt;Python&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#python-1&quot;&gt;Python教程&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#python-2&quot;&gt;Python安装&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#python-pip&quot;&gt;Python pip安装&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#python-&quot;&gt;Python 库安装的小方法&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;&lt;a href=&quot;#python--1&quot;&gt;Python 文件输入输出&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;python&quot;&gt;Python&lt;/h1&gt;
+
+&lt;h2 id=&quot;python-1&quot;&gt;Python教程&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;http://www.kuqin.com/abyteofpython_cn/&quot;&gt;http://www.kuqin.com/abyteofpython_cn/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;一本很好用的python教程。网页版的，也有pdf版的，但是我觉得网页比较实用。看起来很快的~&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000/001431608990315a01b575e2ab041168ff0df194698afac000&quot;&gt;https://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000/001431608990315a01b575e2ab041168ff0df194698afac000&lt;/a&gt;
+廖雪峰的博客 python3.x的教程 他也有2.7的教程&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;python-2&quot;&gt;Python安装&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.python.org/downloads/&quot;&gt;https://www.python.org/downloads/&lt;/a&gt; 从这里下载安装文件&lt;/p&gt;
+
+&lt;p&gt;我用的是python2.7 你了解一下你们那里一般用python2.x还是python3.x？ 感觉差别不大&lt;/p&gt;
+
+&lt;p&gt;我之前用caffe的时候python安装的要求：(我觉得深度学习的两个都可以吧）&lt;/p&gt;
+
+&lt;p&gt;For Python Caffe: Python 2.7 or Python 3.3+, numpy (&amp;gt;= 1.7), boost-provided boost.python&lt;/p&gt;
+
+&lt;p&gt;之后是我重新在我电脑上装一遍 python2.7的步骤~&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;你可以先在命令行里面试一下python(出现下面那种就是没安装过）&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://wx3.sinaimg.cn/mw690/95795825ly1fizivfce4pj20ag01jq2q.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;因为我们之前大三下的大作业有写过python你可以试试有没有安装过。没有的话在之前的网址下个安装包，安装的时候把最后一个add python.exe to path选上(如下图)，安装路径好像没啥要求，只要你记得装在哪儿就好
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://www.liaoxuefeng.com/files/attachments/0014222393965540081463bf8a9499094bdda24b6fdf2d6000&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这样安装就好啦，可以在命令行里试一下python，成功的话就会显示出你的python的版本号&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;如果你忘记了选上最后一个的话，就手动加一下环境变量，安装成功就不要管下面的了&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果你没有勾选最后一个选项，完成之后 你在命令行输入python 估计还是会提示没有python~&lt;/p&gt;
+
+    &lt;p&gt;你cd到安装路径 再输入python就好啦&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;https://wx3.sinaimg.cn/mw690/95795825ly1fizj0wwjxsj20ht029744.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;为了方便用，你可以把python.exe所在的文件夹加到环境变量里面，这样在哪儿都可以用python了( ‘计算机’ -&amp;gt; ‘高级系统设置’ -&amp;gt; ‘环境变量’ -&amp;gt; ‘Path’ -&amp;gt; ‘编辑’ )&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;https://wx3.sinaimg.cn/mw690/95795825ly1fizj73s8z0j20nv0ft0un.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;python-pip&quot;&gt;Python pip安装&lt;/h2&gt;
+
+&lt;p&gt;安装的时候已经勾选了安装pip的选项，pip是用来方便地管理Python的第三方包的。&lt;/p&gt;
+
+&lt;p&gt;pip安装好在安装路径的 ‘Scripts’ 文件夹下，为了方便使用也把pip所在文件夹添加到环境变量中，就可以在任意地方使用pip了，而不用cd到其所在的文件夹下。&lt;/p&gt;
+
+&lt;p&gt;也可以在命令行里试试pip命令 下拉菜单会给出pip command 的用法&lt;/p&gt;
+
+&lt;h2 id=&quot;python-&quot;&gt;Python 库安装的小方法&lt;/h2&gt;
+
+&lt;p&gt;很多时候，我们都依赖于第三方的库。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://www.lfd.uci.edu/~gohlke/pythonlibs/&quot;&gt;http://www.lfd.uci.edu/~gohlke/pythonlibs/&lt;/a&gt;
+  这个库是我找到的比较全的一个python的库的集合，需要什么就在里面查找就可以了。&lt;/p&gt;
+
+&lt;p&gt;下载相应的.whl文件 然后使用pip install 加上相应的文件名即可。&lt;/p&gt;
+
+&lt;p&gt;我之前遇到过一个问题就是类似numpy有很多版本的whl文件，得选择自己系统适合的版本。类似问题:
+  &lt;a href=&quot;https://stackoverflow.com/questions/28107123/cannot-install-numpy-from-wheel-format?rq=1&quot;&gt;https://stackoverflow.com/questions/28107123/cannot-install-numpy-from-wheel-format?rq=1&lt;/a&gt; &lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;import pip; print(pip.pep425tags.get_supported())&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;在python环境下运行上一行代码，可以看到系统可以安装怎样的wheel，按照相应的下载就可以啦~&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;那个库安装小方法还不错，之前网上教程乱七八糟的，看着也浪费时间。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;python--1&quot;&gt;Python 文件输入输出&lt;/h2&gt;
+
+&lt;p&gt;## python&lt;/p&gt;
+</description>
+        <pubDate>2017-08-28 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2017/08/28/Python/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2017/08/28/Python/</guid>
+        
+        <category>Python</category>
+        
+        
+        <category>Python</category>
+        
+      </item>
+    
+      <item>
+        <title>冯米塞斯分布</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#von-mises-&quot;&gt;Von Mises 分布&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;相位论文基础总结&lt;/p&gt;
+
+&lt;h2 id=&quot;von-mises-&quot;&gt;Von Mises 分布&lt;/h2&gt;
+
+&lt;p&gt;The Von Mises distribution (also called the circular normal or Tikhonov distribution) is a continuous probability distribution with a range from 0 to 2π. It is similar to the normal distribution, except coordinates are placed on a circular plane. &lt;/p&gt;
+
+&lt;p&gt;Directional statistics (also circular statistics or spherical statistics) is the subdiscipline of statistics that deals with directions (unit vectors in Rn), axes (lines through the origin in Rn) or rotations in Rn. More generally, directional statistics deals with observations on compact Riemannian manifolds.&lt;/p&gt;
+
+&lt;p&gt;The overall shape of a protein can be parameterized as a sequence of points on the unit sphere. Shown are two views of the spherical histogram of such points for a large collection of protein structures. The statistical treatment of such data is in the realm of directional statistics.&lt;/p&gt;
+
+&lt;p&gt;The fact that 0 degrees and 360 degrees are identical angles, so that for example 180 degrees is not a sensible mean of 2 degrees and 358 degrees, provides one illustration that special statistical methods are required for the analysis of some types of data (in this case, angular data).&lt;/p&gt;
+
+&lt;p&gt;0和360度是等价的，使得180度不是2度和358度的明智的均值(??)，所以对于角度这样的数据需要特殊的统计方法。&lt;/p&gt;
+
+&lt;p&gt;The usefulness of the von Mises distribution is twofold: it is the most mathematically tractable of all circular distributions, allowing simpler statistical analysis, and it is a close approximation to the wrapped normal distribution, which, analogously to the linear normal distribution, is important because it is the limiting case for the sum of a large number of small angular deviations. （缠绕正态分布是大量小角度偏差的和的极限情况？）In fact, the von Mises distribution is often known as the “circular normal” distribution because of its ease of use and its close relationship to the wrapped normal distribution (Fisher, 1993).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.statisticshowto.com/wp-content/uploads/2017/01/vm.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+</description>
+        <pubDate>2017-03-17 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2017/03/17/VonMises/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2017/03/17/VonMises/</guid>
+        
+        <category>VonMises</category>
+        
+        
+        <category>Distribution</category>
+        
+      </item>
+    
+      <item>
+        <title>hello ASR!</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#asr&quot;&gt;简介ASR&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#asr-1&quot;&gt;ASR实现难点&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;语音是由调节动态系统中相对少的参数来产生的。这意味着隐藏在语音特征下的真正结构的复杂度，比直接描述现有特征的模型要小得多。&lt;/p&gt;
+
+&lt;h2 id=&quot;asr&quot;&gt;简介ASR&lt;/h2&gt;
+&lt;p&gt;ASR(Automatic speech recognition)　speech-to-text transcription&lt;/p&gt;
+
+&lt;h3 id=&quot;asr-1&quot;&gt;ASR实现难点&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Variability in speech recognition&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Size Number of word types in vocabulary, perplexity&lt;/li&gt;
+  &lt;li&gt;Speaker Tuned for a particular speaker, or speaker-independent? Adaptation to speaker characteristics and accent&lt;/li&gt;
+  &lt;li&gt;Acoustic environment Noise, competing speakers, channel conditions (microphone, phone line, room acoustics)&lt;/li&gt;
+  &lt;li&gt;Style Continuously spoken or isolated? Planned monologue or spontaneous conversation?&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Data-driven machine learning: Construct simple models of speech which can be learned from large amounts of data
+(thousands of hours of speech recordings)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        <pubDate>2016-12-12 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/12/12/speech-recognition/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/12/12/speech-recognition/</guid>
+        
+        <category>ASR</category>
+        
+        
+        <category>ASR</category>
+        
+      </item>
+    
+      <item>
+        <title>电子电路复习</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot;&gt;放大器的总结&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;放大器的总结&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://github.com/crystalxian/images/blob/master/1.PNG?raw=true&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+</description>
+        <pubDate>2016-09-11 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/09/11/circuit-review/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/09/11/circuit-review/</guid>
+        
+        <category>circuit</category>
+        
+        
+        <category>circuit</category>
+        
+      </item>
+    
+      <item>
+        <title>C/C++ 复习笔记</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#section&quot;&gt;原码 反码 补码理解&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#printf&quot;&gt;printf的输出问题&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#scanf&quot;&gt;scanf的输入问题&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#section-1&quot;&gt;有意思的输入问题&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#ii&quot;&gt;++i和i++的区别&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#ccelseif-else-if&quot;&gt;C/C++中没有elseif 要写多重控制&lt;code&gt;else if&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#c-&quot;&gt;C 指针问题汇总&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#c--1&quot;&gt;C 的数组问题&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#c&quot;&gt;C数组和指针总结&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#c--2&quot;&gt;C 指针数组和数组指针&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#c-1&quot;&gt;C语言中指针数组在函数中传参的问题&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#and&quot;&gt;字符数组and字符指针&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#fgets&quot;&gt;针对文件操作中fgets的问题&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;section&quot;&gt;原码 反码 补码理解&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;http://www.cnblogs.com/zhangziqiu/archive/2011/03/30/ComputerCode.html&quot;&gt;一篇总结不错的帖子&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;printf&quot;&gt;printf的输出问题&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;
+int k=8; printf(&quot;%d,%d\n&quot;, k, ++k);
+&lt;/code&gt;
+输出结果不是预想的8,9，而是9,9。这是因为调用函数printf时，其参数是从右至左进行传递的，将先进行++k运算。
+C和C++的参数传递是自右向左的，主要是入栈出栈来进行操作的。&lt;/p&gt;
+
+&lt;h3 id=&quot;scanf&quot;&gt;scanf的输入问题&lt;/h3&gt;
+&lt;p&gt;跳过某个输入数据
+可以在%和格式字符之间加入“*”号，作用是跳过对应的输入数据。例如：
+&lt;code&gt;
+int x, y, z;
+scanf(&quot;%d%*d%d%d&quot;, &amp;amp;x, &amp;amp;y, &amp;amp;z);
+printf(&quot;%d %d %d\n&quot;, x, y, z);
+&lt;/code&gt;
+若是输入：12 34 56 78 则输出是：12 56 78&lt;/p&gt;
+
+&lt;h3 id=&quot;section-1&quot;&gt;有意思的输入问题&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;conio.h&amp;gt;
+main( )
+{ char x, y;
+x= _getche( ); /* 读入一个字符 */
+_ungetch(x); /* 将读入的字符放回输入流中 */
+y= _getche( );
+putchar(y);
+}
+&lt;/code&gt;
+总感觉是在输入流里偷看了一个数据。不知道具体工程上面有什么用没有。&lt;/p&gt;
+
+&lt;h3 id=&quot;ii&quot;&gt;++i和i++的区别&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://www.zhihu.com/question/19811087&quot;&gt;迄今看到解释的最明白，膜拜之&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;ccelseif-else-if&quot;&gt;C/C++中没有elseif 要写多重控制&lt;code&gt;else if&lt;/code&gt;&lt;/h3&gt;
+
+&lt;h3 id=&quot;c-&quot;&gt;C 指针问题汇总&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;https://cl.ly/0W1W3x3T2H0z/pointer.jpg&quot; alt=&quot;指针在内存中存储的内容是一个变量的内存地址&quot; /&gt;
+一个指针变量在32位系统下面永远都是4个字节。&lt;/p&gt;
+
+&lt;h3 id=&quot;c--1&quot;&gt;C 的数组问题&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;http://c.biancheng.net/cpp/uploads/allimg/120205/1-120205200444164.jpg&quot; alt=&quot;数组名字a代表首元素的首地址&quot; /&gt;
+编译器并没有为数组a分配一块内存来存其地址，这一点就与指针有很大的差别。a不能作为左值。是因为不能取地址吗？
+&amp;amp;a 的值是一样的，但意思不一样，a 是数组首元素的首地址，也就是a[0]的首地址，&amp;amp;a 是数组的首地址，a+1 是数组下一元素的首地址，即a[1]的首地址,&amp;amp;a+1 是下一个数组的首地址。&lt;/p&gt;
+
+&lt;h3 id=&quot;c&quot;&gt;C数组和指针总结&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;https://cl.ly/2G1l3q3W3Z1p/array1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;c--2&quot;&gt;C 指针数组和数组指针&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;http://c.biancheng.net/cpp/uploads/allimg/120205/1-120205202113a8.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;c-1&quot;&gt;C语言中指针数组在函数中传参的问题&lt;/h3&gt;
+&lt;p&gt;C 语言中，当一维数组作为函数参数的时候，编译器总是把它解析成一个指向其首元素首地址的指针。
+数组名在形参中退化为指针。&lt;/p&gt;
+
+&lt;h3 id=&quot;and&quot;&gt;字符数组and字符指针&lt;/h3&gt;
+&lt;p&gt;字符指针只能存放字符串的首地址；并且，对于赋值语句中的字符串，编译系统会给予分配存储空间，而对于通过键盘输入的字符串，系统是不分配存储空间的。对于字符数组之所以能通过输入字符串的方式为字符数组输入字符元素，是因为在定义字符数组时已经为数组分配了存储空间。&lt;/p&gt;
+
+&lt;h3 id=&quot;fgets&quot;&gt;针对文件操作中fgets的问题&lt;/h3&gt;
+&lt;p&gt;对于多打了一个回车的问题，fgets会读入一行的字符，但是如果最后的时候多输入一个回车，并且用feof判断，则会导致输出的结果多一行。
+&amp;gt; a.dat&lt;/p&gt;
+
+&lt;p&gt;```
+abcdefg
+12345
+998e929292
+ddlldldldldldlldldldldl&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+&amp;gt; b.dat
+&lt;/code&gt;
+abcdefg
+12345
+998e929292
+ddlldldldldldlldldldldl
+ddlldldldldldlldldldldl
+&lt;code&gt;
+原因：
+&lt;/code&gt;
+/&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;em&gt;**&lt;/em&gt;
+ char &lt;em&gt;fgets(char *s, int n,  FILE *stream)
+   {
+     register int c;
+     register char *cs;
+     cs=s;
+     while(–n&amp;gt;0 &amp;amp;&amp;amp;(c = getc(stream))!=EOF)
+     if ((&lt;/em&gt;cs++=  c) ==’\n’)
+           break;
+     *cs =’\0’;
+     return (c == EOF &amp;amp;&amp;amp; cs == s) ?NULL :s ;
+    }&lt;/p&gt;
+
+&lt;p&gt;/&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;&lt;strong&gt;**&lt;/strong&gt;**
+```&lt;/p&gt;
+</description>
+        <pubDate>2016-08-30 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/08/30/C-Review/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/08/30/C-Review/</guid>
+        
+        <category>C</category>
+        
+        <category>C++</category>
+        
+        <category>数字逻辑</category>
+        
+        
+        <category>C/C++</category>
+        
+      </item>
+    
+      <item>
+        <title>在Caffe中自定义smooth_L1_loss_layer</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#developing-new-loss-layers&quot;&gt;Developing new loss layers&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;#forward-only-layers&quot;&gt;Forward-Only Layers&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;developing-new-loss-layers&quot;&gt;Developing new loss layers&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Add a class declaration for smooth_L1_loss_layer layer to &lt;code&gt;include/caffe/layers/smooth_L1_loss_layer.hpp&lt;/code&gt;. 
+    &lt;ul&gt;
+      &lt;li&gt;Include an inline implementation of &lt;code&gt;type&lt;/code&gt; overriding the method &lt;code&gt;virtual inline const char* type() const { return &quot;SmoothL1Loss&quot;; }&lt;/code&gt; &lt;/li&gt;
+      &lt;li&gt;Implement the &lt;code&gt;MinBottomBlobs()&lt;/code&gt; methods to specify minimum blob number requirements; &lt;code&gt;MaxBottomBlobs()&lt;/code&gt; methods to specify maximum blob number requirements.&lt;/li&gt;
+      &lt;li&gt;Does layer-specific setup:override the method &lt;code&gt;vitual void LayerSetUp&lt;/code&gt; as well as &lt;code&gt;vitual void Reshape&lt;/code&gt;.&lt;/li&gt;
+      &lt;li&gt;Implement &lt;code&gt;virtual void Forward_cpu&lt;/code&gt; &lt;code&gt;virtual void Forward_gpu&lt;/code&gt; &lt;code&gt;virtual void Backward_cpu&lt;/code&gt; &lt;code&gt;virtual void Backward_gpu&lt;/code&gt; methods to do the forward/backward process.(gpu and backward are optional for other layers)&lt;/li&gt;
+      &lt;li&gt;Unlike most loss layers, in the SmoothL1LossLayer we can backpropagate to both inputs – override to return true and always allow force_backward. &lt;strong&gt;However, the backward computation above doesn’t get correct results, because Caffe decides that the network does not need backward computation. To get correct backward results, we need to set &lt;code&gt;'force_backward: true'&lt;/code&gt; in your network prototxt.&lt;/strong&gt;(optional for other layers)&lt;/li&gt;
+      &lt;li&gt;Implement the constructor inheriting from LossLayer &lt;code&gt;explicit SmoothL1LossLayer(const LayerParameter&amp;amp; param): LossLayer&amp;lt;Dtype&amp;gt;(param), diff_() {}&lt;/code&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Implement your layer in &lt;code&gt;src/caffe/layers/smooth_L1_loss_layer.cpp&lt;/code&gt;.
+    &lt;ul&gt;
+      &lt;li&gt;&lt;code&gt;LayerSetUp&lt;/code&gt; for one-time initialization: reading parameters, fixed-size allocations, etc.&lt;/li&gt;
+      &lt;li&gt;&lt;code&gt;Reshape&lt;/code&gt; for computing the sizes of top blobs, allocating buffers, and any other work that depends on the shapes of bottom blobs&lt;/li&gt;
+      &lt;li&gt;&lt;code&gt;Forward_cpu&lt;/code&gt; for the function your layer computes&lt;/li&gt;
+      &lt;li&gt;&lt;code&gt;Backward_cpu&lt;/code&gt; for its gradient (Optional – a layer can be forward-only)&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;(Optional) Implement the GPU versions &lt;code&gt;Forward_gpu&lt;/code&gt; and &lt;code&gt;Backward_gpu&lt;/code&gt; in &lt;code&gt;layers/your_layer.cu&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;If needed, declare parameters in &lt;code&gt;proto/caffe.proto&lt;/code&gt;, using (and then incrementing) the “next available layer-specific ID” declared in a comment above &lt;code&gt;message LayerParameter&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Instantiate and register your layer in your cpp file with the macro provided in &lt;code&gt;layer_factory.hpp&lt;/code&gt;. Assuming that you have a new layer &lt;code&gt;MyAwesomeLayer&lt;/code&gt;, you can achieve it with the following command:
+&lt;code&gt;
+INSTANTIATE_CLASS(MyAwesomeLayer);
+REGISTER_LAYER_CLASS(MyAwesome);
+&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Note that you should put the registration code in your own cpp file, so your implementation of a layer is self-contained.&lt;/li&gt;
+  &lt;li&gt;Optionally, you can also register a Creator if your layer has multiple engines. For an example on how to define a creator function and register it, see &lt;code&gt;GetConvolutionLayer&lt;/code&gt; in &lt;code&gt;caffe/layer_factory.cpp&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;Write tests in &lt;code&gt;test/test_your_layer.cpp&lt;/code&gt;. Use &lt;code&gt;test/test_gradient_check_util.hpp&lt;/code&gt; to check that your Forward and Backward implementations are in numerical agreement.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;forward-only-layers&quot;&gt;Forward-Only Layers&lt;/h2&gt;
+&lt;p&gt;If you want to write a layer that you will only ever include in a test net, you do not have to code the backward pass. For example, you might want a layer that measures performance metrics at test time that haven’t already been implemented.
+Doing this is very simple. You can write an inline implementation of &lt;code&gt;Backward_cpu&lt;/code&gt; (or &lt;code&gt;Backward_gpu&lt;/code&gt;) together with the definition of your layer in &lt;code&gt;include/caffe/your_layer.hpp&lt;/code&gt; that looks like:
+&lt;code&gt;
+virtual void Backward_cpu(const vector&amp;lt;Blob&amp;lt;Dtype&amp;gt;*&amp;gt;&amp;amp; top, const vector&amp;lt;bool&amp;gt;&amp;amp; propagate_down, const vector&amp;lt;Blob&amp;lt;Dtype&amp;gt;*&amp;gt;&amp;amp; bottom) {
+  NOT_IMPLEMENTED;
+}
+&lt;/code&gt;
+The &lt;code&gt;NOT_IMPLEMENTED&lt;/code&gt; macro (defined in &lt;code&gt;common.hpp&lt;/code&gt;) throws an error log saying “Not implemented yet”. For examples, look at the accuracy layer (&lt;code&gt;accuracy_layer.hpp&lt;/code&gt;) and threshold layer (&lt;code&gt;threshold_layer.hpp&lt;/code&gt;) definitions.&lt;/p&gt;
+</description>
+        <pubDate>2016-08-16 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/08/16/Add-new-layer/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/08/16/Add-new-layer/</guid>
+        
+        <category>Caffe</category>
+        
+        <category>Layer</category>
+        
+        
+        <category>Caffe</category>
+        
+      </item>
+    
+      <item>
+        <title>Caffe Blob源码解读</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#blob&quot;&gt;Blob源码解读&lt;/a&gt;    &lt;ul&gt;
+      &lt;li&gt;&lt;a href=&quot;#update&quot;&gt;Update&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;blob&quot;&gt;Blob源码解读&lt;/h2&gt;
+
+&lt;p&gt;补充Update()函数解读&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;有一篇较为完整的解析见&lt;a href=&quot;http://www.cnblogs.com/louyihang-loves-baiyan/p/5149628.html&quot;&gt;Blob解读&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;其中有些补充和更正&lt;/p&gt;
+
+&lt;h3 id=&quot;update&quot;&gt;Update&lt;/h3&gt;
+
+&lt;p&gt;计算的是&lt;script type=&quot;math/tex&quot;&gt;data=-diff+data&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+	caffe_axpy&amp;lt;Dtype&amp;gt;(count_, Dtype(-1),
+	        static_cast&amp;lt;const Dtype*&amp;gt;(diff_-&amp;gt;cpu_data()),
+			        static_cast&amp;lt;Dtype*&amp;gt;(data_-&amp;gt;mutable_cpu_data()));
+	void caffe_axpy&amp;lt;float&amp;gt;(const int N, const float alpha, const float* X,
+		      float* Y) { cblas_saxpy(N, alpha, X, 1, Y, 1); }
+	\\其中两个1代表的是stride。
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+</description>
+        <pubDate>2016-08-15 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/08/15/Caffe-Blob/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/08/15/Caffe-Blob/</guid>
+        
+        <category>Caffe</category>
+        
+        <category>Blob</category>
+        
+        
+        <category>Caffe</category>
+        
+      </item>
+    
+      <item>
+        <title>Linux Skill</title>
+        <description>&lt;ul id=&quot;markdown-toc&quot;&gt;
+  &lt;li&gt;&lt;a href=&quot;#linux&quot;&gt;linux的一些小技巧&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;linux&quot;&gt;linux的一些小技巧&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;让一部分的代码退格&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;Crtl+v进入可视化
+选中行数
+大写I输入
+大写D删除
+输入想要的部分
+再按ESC
+—&lt;/p&gt;
+
+</description>
+        <pubDate>2016-08-12 00:00:00 +0800</pubDate>
+        <link>http://crystalxian.github.io/2016/08/12/Linux-Skill/</link>
+        <guid isPermaLink="true">http://crystalxian.github.io/2016/08/12/Linux-Skill/</guid>
+        
+        <category>Linux</category>
+        
+        
+        <category>Linux</category>
+        
+      </item>
+    
+  </channel>
+</rss>

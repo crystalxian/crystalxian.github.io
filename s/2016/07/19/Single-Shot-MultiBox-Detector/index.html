@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>SSD learning Note</title>
+    <meta name="description" content="记录SSD的学习笔记。">
+
+    <link rel="shortcut icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="stylesheet" href=" /css/fontawesome/css/font-awesome.min.css ">
+    <link rel="stylesheet" href=" /css/main.css ">
+    <link rel="canonical" href="http://crystalxian.github.io/2016/07/19/Single-Shot-MultiBox-Detector/">
+    <link rel="alternate" type="application/rss+xml" title="DzX" href="http://crystalxian.github.io /feed.xml ">
+
+
+    <script>
+    // 百度统计代码
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?d7b2243d04d79e6bae97479cb67ba8ed";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+</head>
+
+
+  <body>
+
+    <header id="top">
+    <div class="wrapper">
+        <a href="/" class="brand">DzX</a>
+        <small>Beginner on Deep Learning</small>
+        <button id="headerMenu" class="menu"><i class="fa fa-bars"></i></button>
+        <nav id="headerNav">
+            <ul>
+                <li>
+                    
+                    <a href="/">
+                    
+                        <i class="fa fa-home"></i>Home
+                    </a>
+                </li>
+
+                
+                    
+                    <li>
+                        
+                        <a href="/page/category/">
+                        
+                            <i class="fa fa-th-list"></i>Categories
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/about/">
+                        
+                            <i class="fa fa-heart"></i>About
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/demo/">
+                        
+                            <i class="fa fa-play"></i>Demo
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/tag/">
+                        
+                            <i class="fa fa-tags"></i>Tags
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/collection/">
+                        
+                            <i class="fa fa-bookmark"></i>Collections
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/archive/">
+                        
+                            <i class="fa fa-archive"></i>Archives
+                        </a>
+                    </li>
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            </ul>
+        </nav>
+    </div>
+</header>
+
+
+        <div class="page clearfix" post>
+    <div class="left">
+        <h1>SSD learning Note</h1>
+        <div class="label">
+
+            <div class="label-card">
+                <i class="fa fa-calendar"></i>2016-07-19
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+            
+
+
+<!-- <span class="point">•</span> -->
+<span class="categories">
+  <i class="fa fa-th-list"></i>
+  
+    
+        <a href="/category/#Object-Detection" title="Category: Object-Detection" rel="category">Object-Detection</a>
+    
+  
+
+  <!-- <span class="point">•</span> -->
+</span>
+
+
+            </div>
+
+            <div class="label-card">
+            
+<!-- <span class="point">•</span> -->
+<span class="pageTag">
+  <i class="fa fa-tags"></i>
+  
+    
+        <!--a href="/tag/#SSD" title="Tag: SSD" rel="tag">SSD</a-->
+        <a href="/tag/#SSD" title="Tag: SSD" rel="tag">SSD</a>&nbsp;
+    
+        <!--a href="/tag/#CNN" title="Tag: CNN" rel="tag">CNN</a-->
+        <a href="/tag/#CNN" title="Tag: CNN" rel="tag">CNN</a>&nbsp;
+    
+        <!--a href="/tag/#Detection" title="Tag: Detection" rel="tag">Detection</a-->
+        <a href="/tag/#Detection" title="Tag: Detection" rel="tag">Detection</a>
+    
+  
+
+</span>
+
+            </div>
+
+        </div>
+        <hr>
+        <article itemscope itemtype="http://schema.org/BlogPosting">
+        <ul id="markdown-toc">
+  <li><a href="#section">综述</a></li>
+  <li><a href="#section-1">介绍</a></li>
+  <li><a href="#section-2">相关工作</a></li>
+  <li><a href="#section-3">实现</a></li>
+</ul>
+
+<p>SSD的学习笔记。</p>
+
+<hr />
+
+<h2 id="section">综述</h2>
+
+<ul>
+  <li>
+    <p>Our approach, named SSD, discretizes the output space of bounding boxes into a set of bounding box priors over different aspect ratios and scales per feature map location.</p>
+
+    <p>理解：diescretizes？priors？</p>
+  </li>
+  <li>
+    <p>It completely discards the proposal generation step and encapsulates all the computation in a single network.</p>
+
+    <p>亮点：makes SSD easy to train and straightforward to intergrate into systems that require a detection component.</p>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="section-1">介绍</h2>
+<ul>
+  <li>
+    <p>Region-based Convolutional Neural Networks(R-CNN) or its faster variants approach detection as a classification problem over object proposals, followed by (optional) regression of the bounding box coordinates.</p>
+
+    <p>理解：R-CNN根据selective search选出region proposals，在利用CNN进行分类后，得到一系列的有类别（类别概率）的region proposals。通过nms的方法得到想要的bounding box（？）</p>
+  </li>
+  <li>
+    <p>Given a set of fixed bounding box priors of different aspect ratios and scales, we train a network to select which priors contain objects of interest and adjust their coordinates to better match the object’s shape.</p>
+  </li>
+  <li>
+    <p>In our method, the offset adjustment and confidences for multiple categories of each prior are predicted from the underlying 1x1 feature at each location on a feature map, as opposed to the whole feature map as done in MultiBox and Yolo.</p>
+
+    <p>主要的实现方式如下图所示：</p>
+  </li>
+</ul>
+
+ 	<img src="/assets/ssd_intro.png" alt="" />
+
+<pre><code>理解:？ * The set of bounding box priors we define is in the same spirit as the anchor boxes used in the Faster R-CNN.
+
+分析：
+</code></pre>
+
+<ul>
+  <li>SSD is the first work to combine the idea of convolutional bounding box priors with the ability to predict multiple object categories.</li>
+</ul>
+
+<hr />
+
+<h2 id="section-2">相关工作</h2>
+
+<ul>
+  <li>
+    <p>Faster-RCNN replaces selective search proposals by ones learned from a region proposal network(RPN), and introduces a method to integrate the RPN with Fast R-CNN by alternating between fine-tuning shared convolutional layers and prediction layers for these two networks.
+  借鉴了anchor boxes的观点。</p>
+  </li>
+  <li>
+    <p>If we only use one prior per location freom the topmost feature map,our SSD has similar architecture as OverFeat; if we use the whole topmost feature map for predictions instead of using the convolutional priors, we can approximately reproduce YOLO.</p>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="section-3">实现</h2>
+<ul>
+  <li>Training</li>
+</ul>
+
+<blockquote>
+  <p>用bi来代表每一个priors.每一个prior都包含bounding box和一系列物体类别的置信度。</p>
+</blockquote>
+
+<blockquote>
+  <p>预测box的坐标是通过把网络计算出的offsets加到相应的priors上，所有priors和ground truth boxes都是相对于全图的归一化坐标。’解释’ 归一化的坐标使得我们不必担心输入图片的大小问题。</p>
+</blockquote>
+
+<ul>
+  <li>匹配问题</li>
+</ul>
+
+<p>本文不定期更新。</p>
+
+        </article>
+        <hr>
+
+        
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+        
+
+        <div class="post-recent">
+    
+    <div class="pre">
+
+        <p><strong>上一篇</strong> <a href="/2016/07/17/faster-rcnn-settings-cpu/">R-Cnn算法理解</a></p>
+        
+    </div>
+    <div class="nex">
+
+        
+        <p><strong>下一篇</strong> <a href="/2016/07/24/Latex-Texlive-Sublime/">Latex+Texstudio+Windows笔记</a></p>
+        
+    </div>
+</div>
+
+
+        <h2 id="comments">Comments</h2>
+        
+
+
+<div id="disqus_thread"></div>
+<script>
+    /**
+     * RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     * LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+
+    var disqus_config = function() {
+        this.page.url = 'http://crystalxian.github.io/2016/07/19/Single-Shot-MultiBox-Detector/'; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = 'http://crystalxian.github.io/2016/07/19/Single-Shot-MultiBox-Detector/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+
+    (function() { // DON'T EDIT BELOW THIS LINE
+        var d = document,
+            s = d.createElement('script');
+
+        s.src = '//DzXblog.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+    <button class="anchor"><i class="fa fa-anchor"></i></button>
+    <div class="right">
+        <div class="wrap">
+
+            <!-- Content -->
+            <div class="side content">
+                <div>
+                    Content
+                </div>
+                <ul id="content-side" class="content-ul">
+                    <li><a href="#similar_posts">Similar Posts</a></li>
+                    <li><a href="#comments">Comments</a></li>
+                </ul>
+            </div>
+            <!-- 其他div框放到这里 -->
+            <!-- <div class="side">bbbb</div> -->
+        </div>
+    </div>
+</div>
+<script>
+/**
+ * target _blank
+ */
+(function() {
+    var aTags = document.querySelectorAll('article a:not([id])')
+    for (var i = 0; i < aTags.length; i++) {
+        aTags[i].setAttribute('target', '_blank')
+    }
+}());
+</script>
+<script src="/js/pageContent.js " charset="utf-8"></script>
+
+
+    <footer class="site-footer">
+
+
+    <div class="wrapper">
+
+        <p class="description">
+             View the scenery during learning DL 
+        </p>
+        <p class="contact">
+            Contact me at: 
+            <a href="https://github.com/Crystalxian" title="GitHub"><i class="fa fa-github" aria-hidden="true"></i></a>  
+            <a href="mailto:dongzx13@gmail.com" title="email"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>  
+            <a href="http://weibo.com/xuazhulinglang" title="Weibo"><i class="fa fa-weibo" aria-hidden="true"></i></a>    
+            <a href="https://www.facebook.com/zexiandong" title="Facebook"><i class="fa fa-facebook-official" aria-hidden="true"></i></a>    
+        </p>
+        <p>
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+        </p>
+        <p class="power">
+            <span>
+                Site powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://pages.github.com/">Github Pages</a>.
+            </span>
+            <span>
+                Theme designed by <a href="https://github.com/Gaohaoyang">HyG</a>.
+            </span>
+        </p>
+    </div>
+</footer>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <div class="back-to-top">
+    <a href="#top" class="scroll">
+        <i class="fa fa-arrow-up" aria-hidden="true"></i>
+    </a>
+</div>
+
+    <script src=" /js/main.js " charset="utf-8"></script>
+    <script src=" /js/scroll.min.js " charset="utf-8"></script>
+	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  </body>
+
+</html>

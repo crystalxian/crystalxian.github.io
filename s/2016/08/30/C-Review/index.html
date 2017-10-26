@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>C/C++ 复习笔记</title>
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="stylesheet" href=" /css/fontawesome/css/font-awesome.min.css ">
+    <link rel="stylesheet" href=" /css/main.css ">
+    <link rel="canonical" href="http://crystalxian.github.io/2016/08/30/C-Review/">
+    <link rel="alternate" type="application/rss+xml" title="DzX" href="http://crystalxian.github.io /feed.xml ">
+
+
+    <script>
+    // 百度统计代码
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?d7b2243d04d79e6bae97479cb67ba8ed";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+</head>
+
+
+  <body>
+
+    <header id="top">
+    <div class="wrapper">
+        <a href="/" class="brand">DzX</a>
+        <small>Beginner on Deep Learning</small>
+        <button id="headerMenu" class="menu"><i class="fa fa-bars"></i></button>
+        <nav id="headerNav">
+            <ul>
+                <li>
+                    
+                    <a href="/">
+                    
+                        <i class="fa fa-home"></i>Home
+                    </a>
+                </li>
+
+                
+                    
+                    <li>
+                        
+                        <a href="/page/category/">
+                        
+                            <i class="fa fa-th-list"></i>Categories
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/about/">
+                        
+                            <i class="fa fa-heart"></i>About
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/demo/">
+                        
+                            <i class="fa fa-play"></i>Demo
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/tag/">
+                        
+                            <i class="fa fa-tags"></i>Tags
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/collection/">
+                        
+                            <i class="fa fa-bookmark"></i>Collections
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/archive/">
+                        
+                            <i class="fa fa-archive"></i>Archives
+                        </a>
+                    </li>
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            </ul>
+        </nav>
+    </div>
+</header>
+
+
+        <div class="page clearfix" post>
+    <div class="left">
+        <h1>C/C++ 复习笔记</h1>
+        <div class="label">
+
+            <div class="label-card">
+                <i class="fa fa-calendar"></i>2016-08-30
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+            
+
+
+<!-- <span class="point">•</span> -->
+<span class="categories">
+  <i class="fa fa-th-list"></i>
+  
+    
+        <a href="/category/#C/C++" title="Category: C/C++" rel="category">C/C++</a>
+    
+  
+
+  <!-- <span class="point">•</span> -->
+</span>
+
+
+            </div>
+
+            <div class="label-card">
+            
+<!-- <span class="point">•</span> -->
+<span class="pageTag">
+  <i class="fa fa-tags"></i>
+  
+    
+        <!--a href="/tag/#C" title="Tag: C" rel="tag">C</a-->
+        <a href="/tag/#C" title="Tag: C" rel="tag">C</a>&nbsp;
+    
+        <!--a href="/tag/#C%2B%2B" title="Tag: C++" rel="tag">C++</a-->
+        <a href="/tag/#C++" title="Tag: C++" rel="tag">C++</a>&nbsp;
+    
+        <!--a href="/tag/#%E6%95%B0%E5%AD%97%E9%80%BB%E8%BE%91" title="Tag: 数字逻辑" rel="tag">数字逻辑</a-->
+        <a href="/tag/#数字逻辑" title="Tag: 数字逻辑" rel="tag">数字逻辑</a>
+    
+  
+
+</span>
+
+            </div>
+
+        </div>
+        <hr>
+        <article itemscope itemtype="http://schema.org/BlogPosting">
+        <ul id="markdown-toc">
+  <li><a href="#section">原码 反码 补码理解</a></li>
+  <li><a href="#printf">printf的输出问题</a></li>
+  <li><a href="#scanf">scanf的输入问题</a></li>
+  <li><a href="#section-1">有意思的输入问题</a></li>
+  <li><a href="#ii">++i和i++的区别</a></li>
+  <li><a href="#ccelseif-else-if">C/C++中没有elseif 要写多重控制<code>else if</code></a></li>
+  <li><a href="#c-">C 指针问题汇总</a></li>
+  <li><a href="#c--1">C 的数组问题</a></li>
+  <li><a href="#c">C数组和指针总结</a></li>
+  <li><a href="#c--2">C 指针数组和数组指针</a></li>
+  <li><a href="#c-1">C语言中指针数组在函数中传参的问题</a></li>
+  <li><a href="#and">字符数组and字符指针</a></li>
+  <li><a href="#fgets">针对文件操作中fgets的问题</a></li>
+</ul>
+
+<h3 id="section">原码 反码 补码理解</h3>
+<p><a href="http://www.cnblogs.com/zhangziqiu/archive/2011/03/30/ComputerCode.html">一篇总结不错的帖子</a></p>
+
+<h3 id="printf">printf的输出问题</h3>
+<p><code>
+int k=8; printf("%d,%d\n", k, ++k);
+</code>
+输出结果不是预想的8,9，而是9,9。这是因为调用函数printf时，其参数是从右至左进行传递的，将先进行++k运算。
+C和C++的参数传递是自右向左的，主要是入栈出栈来进行操作的。</p>
+
+<h3 id="scanf">scanf的输入问题</h3>
+<p>跳过某个输入数据
+可以在%和格式字符之间加入“*”号，作用是跳过对应的输入数据。例如：
+<code>
+int x, y, z;
+scanf("%d%*d%d%d", &amp;x, &amp;y, &amp;z);
+printf("%d %d %d\n", x, y, z);
+</code>
+若是输入：12 34 56 78 则输出是：12 56 78</p>
+
+<h3 id="section-1">有意思的输入问题</h3>
+<p><code>
+#include &lt;stdio.h&gt;
+#include &lt;conio.h&gt;
+main( )
+{ char x, y;
+x= _getche( ); /* 读入一个字符 */
+_ungetch(x); /* 将读入的字符放回输入流中 */
+y= _getche( );
+putchar(y);
+}
+</code>
+总感觉是在输入流里偷看了一个数据。不知道具体工程上面有什么用没有。</p>
+
+<h3 id="ii">++i和i++的区别</h3>
+<p><a href="https://www.zhihu.com/question/19811087">迄今看到解释的最明白，膜拜之</a></p>
+
+<h3 id="ccelseif-else-if">C/C++中没有elseif 要写多重控制<code>else if</code></h3>
+
+<h3 id="c-">C 指针问题汇总</h3>
+<p><img src="https://cl.ly/0W1W3x3T2H0z/pointer.jpg" alt="指针在内存中存储的内容是一个变量的内存地址" />
+一个指针变量在32位系统下面永远都是4个字节。</p>
+
+<h3 id="c--1">C 的数组问题</h3>
+<p><img src="http://c.biancheng.net/cpp/uploads/allimg/120205/1-120205200444164.jpg" alt="数组名字a代表首元素的首地址" />
+编译器并没有为数组a分配一块内存来存其地址，这一点就与指针有很大的差别。a不能作为左值。是因为不能取地址吗？
+&amp;a 的值是一样的，但意思不一样，a 是数组首元素的首地址，也就是a[0]的首地址，&amp;a 是数组的首地址，a+1 是数组下一元素的首地址，即a[1]的首地址,&amp;a+1 是下一个数组的首地址。</p>
+
+<h3 id="c">C数组和指针总结</h3>
+<p><img src="https://cl.ly/2G1l3q3W3Z1p/array1.png" alt="" /></p>
+
+<h3 id="c--2">C 指针数组和数组指针</h3>
+<p><img src="http://c.biancheng.net/cpp/uploads/allimg/120205/1-120205202113a8.jpg" alt="" /></p>
+
+<h3 id="c-1">C语言中指针数组在函数中传参的问题</h3>
+<p>C 语言中，当一维数组作为函数参数的时候，编译器总是把它解析成一个指向其首元素首地址的指针。
+数组名在形参中退化为指针。</p>
+
+<h3 id="and">字符数组and字符指针</h3>
+<p>字符指针只能存放字符串的首地址；并且，对于赋值语句中的字符串，编译系统会给予分配存储空间，而对于通过键盘输入的字符串，系统是不分配存储空间的。对于字符数组之所以能通过输入字符串的方式为字符数组输入字符元素，是因为在定义字符数组时已经为数组分配了存储空间。</p>
+
+<h3 id="fgets">针对文件操作中fgets的问题</h3>
+<p>对于多打了一个回车的问题，fgets会读入一行的字符，但是如果最后的时候多输入一个回车，并且用feof判断，则会导致输出的结果多一行。
+&gt; a.dat</p>
+
+<p>```
+abcdefg
+12345
+998e929292
+ddlldldldldldlldldldldl</p>
+
+<p><code>
+&gt; b.dat
+</code>
+abcdefg
+12345
+998e929292
+ddlldldldldldlldldldldl
+ddlldldldldldlldldldldl
+<code>
+原因：
+</code>
+/<strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><em>**</em>
+ char <em>fgets(char *s, int n,  FILE *stream)
+   {
+     register int c;
+     register char *cs;
+     cs=s;
+     while(–n&gt;0 &amp;&amp;(c = getc(stream))!=EOF)
+     if ((</em>cs++=  c) ==’\n’)
+           break;
+     *cs =’\0’;
+     return (c == EOF &amp;&amp; cs == s) ?NULL :s ;
+    }</p>
+
+<p>/<strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong><strong>**</strong>**
+```</p>
+
+        </article>
+        <hr>
+
+        
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+                    
+                
+            
+        
+        
+
+        <div class="post-recent">
+    
+    <div class="pre">
+
+        <p><strong>上一篇</strong> <a href="/2016/08/16/Add-new-layer/">在Caffe中自定义smooth_L1_loss_layer</a></p>
+        
+    </div>
+    <div class="nex">
+
+        
+        <p><strong>下一篇</strong> <a href="/2016/09/11/circuit-review/">电子电路复习</a></p>
+        
+    </div>
+</div>
+
+
+        <h2 id="comments">Comments</h2>
+        
+
+
+<div id="disqus_thread"></div>
+<script>
+    /**
+     * RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     * LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+
+    var disqus_config = function() {
+        this.page.url = 'http://crystalxian.github.io/2016/08/30/C-Review/'; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = 'http://crystalxian.github.io/2016/08/30/C-Review/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+
+    (function() { // DON'T EDIT BELOW THIS LINE
+        var d = document,
+            s = d.createElement('script');
+
+        s.src = '//DzXblog.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+    <button class="anchor"><i class="fa fa-anchor"></i></button>
+    <div class="right">
+        <div class="wrap">
+
+            <!-- Content -->
+            <div class="side content">
+                <div>
+                    Content
+                </div>
+                <ul id="content-side" class="content-ul">
+                    <li><a href="#similar_posts">Similar Posts</a></li>
+                    <li><a href="#comments">Comments</a></li>
+                </ul>
+            </div>
+            <!-- 其他div框放到这里 -->
+            <!-- <div class="side">bbbb</div> -->
+        </div>
+    </div>
+</div>
+<script>
+/**
+ * target _blank
+ */
+(function() {
+    var aTags = document.querySelectorAll('article a:not([id])')
+    for (var i = 0; i < aTags.length; i++) {
+        aTags[i].setAttribute('target', '_blank')
+    }
+}());
+</script>
+<script src="/js/pageContent.js " charset="utf-8"></script>
+
+
+    <footer class="site-footer">
+
+
+    <div class="wrapper">
+
+        <p class="description">
+             View the scenery during learning DL 
+        </p>
+        <p class="contact">
+            Contact me at: 
+            <a href="https://github.com/Crystalxian" title="GitHub"><i class="fa fa-github" aria-hidden="true"></i></a>  
+            <a href="mailto:dongzx13@gmail.com" title="email"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>  
+            <a href="http://weibo.com/xuazhulinglang" title="Weibo"><i class="fa fa-weibo" aria-hidden="true"></i></a>    
+            <a href="https://www.facebook.com/zexiandong" title="Facebook"><i class="fa fa-facebook-official" aria-hidden="true"></i></a>    
+        </p>
+        <p>
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+        </p>
+        <p class="power">
+            <span>
+                Site powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://pages.github.com/">Github Pages</a>.
+            </span>
+            <span>
+                Theme designed by <a href="https://github.com/Gaohaoyang">HyG</a>.
+            </span>
+        </p>
+    </div>
+</footer>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <div class="back-to-top">
+    <a href="#top" class="scroll">
+        <i class="fa fa-arrow-up" aria-hidden="true"></i>
+    </a>
+</div>
+
+    <script src=" /js/main.js " charset="utf-8"></script>
+    <script src=" /js/scroll.min.js " charset="utf-8"></script>
+	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  </body>
+
+</html>

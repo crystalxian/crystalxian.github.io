@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>在Caffe中自定义smooth_L1_loss_layer</title>
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico?" type="image/x-icon">
+    <link rel="stylesheet" href=" /css/fontawesome/css/font-awesome.min.css ">
+    <link rel="stylesheet" href=" /css/main.css ">
+    <link rel="canonical" href="http://crystalxian.github.io/2016/08/16/Add-new-layer/">
+    <link rel="alternate" type="application/rss+xml" title="DzX" href="http://crystalxian.github.io /feed.xml ">
+
+
+    <script>
+    // 百度统计代码
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?d7b2243d04d79e6bae97479cb67ba8ed";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
+</head>
+
+
+  <body>
+
+    <header id="top">
+    <div class="wrapper">
+        <a href="/" class="brand">DzX</a>
+        <small>Beginner on Deep Learning</small>
+        <button id="headerMenu" class="menu"><i class="fa fa-bars"></i></button>
+        <nav id="headerNav">
+            <ul>
+                <li>
+                    
+                    <a href="/">
+                    
+                        <i class="fa fa-home"></i>Home
+                    </a>
+                </li>
+
+                
+                    
+                    <li>
+                        
+                        <a href="/page/category/">
+                        
+                            <i class="fa fa-th-list"></i>Categories
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/about/">
+                        
+                            <i class="fa fa-heart"></i>About
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/demo/">
+                        
+                            <i class="fa fa-play"></i>Demo
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/tag/">
+                        
+                            <i class="fa fa-tags"></i>Tags
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/collection/">
+                        
+                            <i class="fa fa-bookmark"></i>Collections
+                        </a>
+                    </li>
+                    
+                
+                    
+                    <li>
+                        
+                        <a href="/page/archive/">
+                        
+                            <i class="fa fa-archive"></i>Archives
+                        </a>
+                    </li>
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            </ul>
+        </nav>
+    </div>
+</header>
+
+
+        <div class="page clearfix" post>
+    <div class="left">
+        <h1>在Caffe中自定义smooth_L1_loss_layer</h1>
+        <div class="label">
+
+            <div class="label-card">
+                <i class="fa fa-calendar"></i>2016-08-16
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+                
+            </div>
+
+            <div class="label-card">
+            
+
+
+<!-- <span class="point">•</span> -->
+<span class="categories">
+  <i class="fa fa-th-list"></i>
+  
+    
+        <a href="/category/#Caffe" title="Category: Caffe" rel="category">Caffe</a>
+    
+  
+
+  <!-- <span class="point">•</span> -->
+</span>
+
+
+            </div>
+
+            <div class="label-card">
+            
+<!-- <span class="point">•</span> -->
+<span class="pageTag">
+  <i class="fa fa-tags"></i>
+  
+    
+        <!--a href="/tag/#Caffe" title="Tag: Caffe" rel="tag">Caffe</a-->
+        <a href="/tag/#Caffe" title="Tag: Caffe" rel="tag">Caffe</a>&nbsp;
+    
+        <!--a href="/tag/#Layer" title="Tag: Layer" rel="tag">Layer</a-->
+        <a href="/tag/#Layer" title="Tag: Layer" rel="tag">Layer</a>
+    
+  
+
+</span>
+
+            </div>
+
+        </div>
+        <hr>
+        <article itemscope itemtype="http://schema.org/BlogPosting">
+        <ul id="markdown-toc">
+  <li><a href="#developing-new-loss-layers">Developing new loss layers</a></li>
+  <li><a href="#forward-only-layers">Forward-Only Layers</a></li>
+</ul>
+
+<h2 id="developing-new-loss-layers">Developing new loss layers</h2>
+
+<ul>
+  <li>Add a class declaration for smooth_L1_loss_layer layer to <code>include/caffe/layers/smooth_L1_loss_layer.hpp</code>. 
+    <ul>
+      <li>Include an inline implementation of <code>type</code> overriding the method <code>virtual inline const char* type() const { return "SmoothL1Loss"; }</code> </li>
+      <li>Implement the <code>MinBottomBlobs()</code> methods to specify minimum blob number requirements; <code>MaxBottomBlobs()</code> methods to specify maximum blob number requirements.</li>
+      <li>Does layer-specific setup:override the method <code>vitual void LayerSetUp</code> as well as <code>vitual void Reshape</code>.</li>
+      <li>Implement <code>virtual void Forward_cpu</code> <code>virtual void Forward_gpu</code> <code>virtual void Backward_cpu</code> <code>virtual void Backward_gpu</code> methods to do the forward/backward process.(gpu and backward are optional for other layers)</li>
+      <li>Unlike most loss layers, in the SmoothL1LossLayer we can backpropagate to both inputs – override to return true and always allow force_backward. <strong>However, the backward computation above doesn’t get correct results, because Caffe decides that the network does not need backward computation. To get correct backward results, we need to set <code>'force_backward: true'</code> in your network prototxt.</strong>(optional for other layers)</li>
+      <li>Implement the constructor inheriting from LossLayer <code>explicit SmoothL1LossLayer(const LayerParameter&amp; param): LossLayer&lt;Dtype&gt;(param), diff_() {}</code></li>
+    </ul>
+  </li>
+  <li>Implement your layer in <code>src/caffe/layers/smooth_L1_loss_layer.cpp</code>.
+    <ul>
+      <li><code>LayerSetUp</code> for one-time initialization: reading parameters, fixed-size allocations, etc.</li>
+      <li><code>Reshape</code> for computing the sizes of top blobs, allocating buffers, and any other work that depends on the shapes of bottom blobs</li>
+      <li><code>Forward_cpu</code> for the function your layer computes</li>
+      <li><code>Backward_cpu</code> for its gradient (Optional – a layer can be forward-only)</li>
+    </ul>
+  </li>
+  <li>(Optional) Implement the GPU versions <code>Forward_gpu</code> and <code>Backward_gpu</code> in <code>layers/your_layer.cu</code>.</li>
+  <li>If needed, declare parameters in <code>proto/caffe.proto</code>, using (and then incrementing) the “next available layer-specific ID” declared in a comment above <code>message LayerParameter</code></li>
+  <li>Instantiate and register your layer in your cpp file with the macro provided in <code>layer_factory.hpp</code>. Assuming that you have a new layer <code>MyAwesomeLayer</code>, you can achieve it with the following command:
+<code>
+INSTANTIATE_CLASS(MyAwesomeLayer);
+REGISTER_LAYER_CLASS(MyAwesome);
+</code></li>
+  <li>Note that you should put the registration code in your own cpp file, so your implementation of a layer is self-contained.</li>
+  <li>Optionally, you can also register a Creator if your layer has multiple engines. For an example on how to define a creator function and register it, see <code>GetConvolutionLayer</code> in <code>caffe/layer_factory.cpp</code>.</li>
+  <li>Write tests in <code>test/test_your_layer.cpp</code>. Use <code>test/test_gradient_check_util.hpp</code> to check that your Forward and Backward implementations are in numerical agreement.</li>
+</ul>
+
+<h2 id="forward-only-layers">Forward-Only Layers</h2>
+<p>If you want to write a layer that you will only ever include in a test net, you do not have to code the backward pass. For example, you might want a layer that measures performance metrics at test time that haven’t already been implemented.
+Doing this is very simple. You can write an inline implementation of <code>Backward_cpu</code> (or <code>Backward_gpu</code>) together with the definition of your layer in <code>include/caffe/your_layer.hpp</code> that looks like:
+<code>
+virtual void Backward_cpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;&amp; top, const vector&lt;bool&gt;&amp; propagate_down, const vector&lt;Blob&lt;Dtype&gt;*&gt;&amp; bottom) {
+  NOT_IMPLEMENTED;
+}
+</code>
+The <code>NOT_IMPLEMENTED</code> macro (defined in <code>common.hpp</code>) throws an error log saying “Not implemented yet”. For examples, look at the accuracy layer (<code>accuracy_layer.hpp</code>) and threshold layer (<code>threshold_layer.hpp</code>) definitions.</p>
+
+        </article>
+        <hr>
+
+        
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                        
+                        <h2 id="similar_posts">Similar Posts</h2>
+                        <ul>
+                        
+                        <li class="relatedPost">
+                            <a href="http://crystalxian.github.io/2016/08/15/Caffe-Blob/">Caffe Blob源码解读
+                            
+                            </a>
+                        </li>
+                        
+                        
+                    
+                
+                    
+                
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                
+                    
+                
+            
+        
+            
+            
+                
+                    
+                        
+                        <li class="relatedPost">
+                            <a href="http://crystalxian.github.io/2016/08/11/Caffe-Install/">Caffe安装
+                            
+                            </a>
+                        </li>
+                        
+                        
+                    
+                
+                    
+                
+            
+        
+        
+            </ul>
+        
+
+        <div class="post-recent">
+    
+    <div class="pre">
+
+        <p><strong>上一篇</strong> <a href="/2016/08/15/Caffe-Blob/">Caffe Blob源码解读</a></p>
+        
+    </div>
+    <div class="nex">
+
+        
+        <p><strong>下一篇</strong> <a href="/2016/08/30/C-Review/">C/C++ 复习笔记</a></p>
+        
+    </div>
+</div>
+
+
+        <h2 id="comments">Comments</h2>
+        
+
+
+<div id="disqus_thread"></div>
+<script>
+    /**
+     * RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     * LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+
+    var disqus_config = function() {
+        this.page.url = 'http://crystalxian.github.io/2016/08/16/Add-new-layer/'; // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = 'http://crystalxian.github.io/2016/08/16/Add-new-layer/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+
+    (function() { // DON'T EDIT BELOW THIS LINE
+        var d = document,
+            s = d.createElement('script');
+
+        s.src = '//DzXblog.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+    <button class="anchor"><i class="fa fa-anchor"></i></button>
+    <div class="right">
+        <div class="wrap">
+
+            <!-- Content -->
+            <div class="side content">
+                <div>
+                    Content
+                </div>
+                <ul id="content-side" class="content-ul">
+                    <li><a href="#similar_posts">Similar Posts</a></li>
+                    <li><a href="#comments">Comments</a></li>
+                </ul>
+            </div>
+            <!-- 其他div框放到这里 -->
+            <!-- <div class="side">bbbb</div> -->
+        </div>
+    </div>
+</div>
+<script>
+/**
+ * target _blank
+ */
+(function() {
+    var aTags = document.querySelectorAll('article a:not([id])')
+    for (var i = 0; i < aTags.length; i++) {
+        aTags[i].setAttribute('target', '_blank')
+    }
+}());
+</script>
+<script src="/js/pageContent.js " charset="utf-8"></script>
+
+
+    <footer class="site-footer">
+
+
+    <div class="wrapper">
+
+        <p class="description">
+             View the scenery during learning DL 
+        </p>
+        <p class="contact">
+            Contact me at: 
+            <a href="https://github.com/Crystalxian" title="GitHub"><i class="fa fa-github" aria-hidden="true"></i></a>  
+            <a href="mailto:dongzx13@gmail.com" title="email"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>  
+            <a href="http://weibo.com/xuazhulinglang" title="Weibo"><i class="fa fa-weibo" aria-hidden="true"></i></a>    
+            <a href="https://www.facebook.com/zexiandong" title="Facebook"><i class="fa fa-facebook-official" aria-hidden="true"></i></a>    
+        </p>
+        <p>
+            本站总访问量<span id="busuanzi_value_site_pv"></span>次，本站访客数<span id="busuanzi_value_site_uv"></span>人次，本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+        </p>
+        <p class="power">
+            <span>
+                Site powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://pages.github.com/">Github Pages</a>.
+            </span>
+            <span>
+                Theme designed by <a href="https://github.com/Gaohaoyang">HyG</a>.
+            </span>
+        </p>
+    </div>
+</footer>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <div class="back-to-top">
+    <a href="#top" class="scroll">
+        <i class="fa fa-arrow-up" aria-hidden="true"></i>
+    </a>
+</div>
+
+    <script src=" /js/main.js " charset="utf-8"></script>
+    <script src=" /js/scroll.min.js " charset="utf-8"></script>
+	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  </body>
+
+</html>
