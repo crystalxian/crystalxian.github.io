@@ -1,0 +1,21 @@
+
+---
+layout: post
+title:  "Zipf's Law and Heaps' Law"
+date:  2017-12-06
+categories: nlp
+tags: DeepLearning nlp
+---
+
+* content
+{:toc}
+
+
+
+## Heaps' Law
+
+>Heaps' law  can also be applied in characterizing natural language processing, according to which the vocabulary size grows in a sublinear function with document size, say $$N(t) \sim t^{\lamda} $$ with $$\lamda<1$$, where t denotes the total number of words and N(t) is the number of distinct words.
+
+Heap法则描述的是词的个数是整个文章长度的函数。即多次出现的词仅算一次的次数是所有单词（文档长度）的函数。
+
+$$ N(t) = Kt^{\lamda}  \lamda \approx 0.5 30 \leq K \ leq 100$$
