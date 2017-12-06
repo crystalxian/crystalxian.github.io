@@ -1,4 +1,3 @@
-
 ---
 layout: post
 title:  "Zipf's Law and Heaps' Law"
@@ -19,3 +18,9 @@ tags: DeepLearning nlp
 Heap法则描述的是词的个数是整个文章长度的函数。即多次出现的词仅算一次的次数是所有单词（文档长度）的函数。
 
 $$ N(t) = Kt^{\lamda}  \lamda \approx 0.5 30 \leq K \ leq 100$$
+
+## Zip's Law
+
+>Ranking all the words in descending order of occurrence frequency and denoting by z(r) the frequency of the word with rank r, the Zipf's law reads $$ z(r)=z_{max}r^{-\alpha} $$ , where $$z_{max}$$ is the maximal frequency and $$\alpha$$ is the so-called Zipf's exponent. 
+
+Zip法则指出一个词出现的频率是它频率降序排名的倒数。$$ y = kx^c, c=-1$$ 也代表频率，x代表排名。
